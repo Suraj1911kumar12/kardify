@@ -1,0 +1,13 @@
+{
+  "migIndex": 1,
+  "data": [
+    {
+      "path": "assets/fonts/Monoton-Regular.ttf",
+      "sha1": "1da14726b8db6ecbd9084185d6ce986dfe3f92f6"
+    },
+    {
+      "path": "assets/fonts/Playball.ttf",
+      "sha1": "fe194c4f312068b879ca94399bdd8fe05622aeb2"
+    }
+  ]
+}
