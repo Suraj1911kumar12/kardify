@@ -12,6 +12,7 @@ export const AuthContext = createContext();
 export const AuthProvider = ({children}) => {
   const navigation = useNavigation();
 
+
   // -------------------------- Api's Url's Calling ------------------------
   const loginAPI = apis.baseUrl + apis.login;
   const signUpApi = apis.baseUrl + apis.register;
@@ -19,25 +20,26 @@ export const AuthProvider = ({children}) => {
   const forgotPasswordOtpApi = apis.baseUrl + apis.forgotpassword;
 
   // --------------------------------Setting State---------------------
-  const [token, setToken] = useState(null);
+  const [token, setToken] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [otpIdSignUp, setOtpIdSignUp] = useState(null);
 
   // ------------------------------Api Calling -----------------
 
+  // const checkToken = async () => {
+  //   const isToken = await AsyncStorage.getItem('token');
+  //   // console.warn('nice 1', isToken);
+  //   setToken(isToken);
+  //   if (token) {
+  //     setIsAuthenticated(true);
+  //   }
+  // };
+
   const checkToken = async () => {
-    const token = await AsyncStorage.getItem('token');
-    // console.warn('nice 1', token);
-    if (!token) {
-      setIsAuthenticated(false);
-    }
-    if (token === 'undefined') {
-      // console.error('hallo');
-      setIsAuthenticated(false);
-    }
-    if (token !== 'undefined' && token.length > 0) {
-      // console.error('suraj');
+    const storedToken = await AsyncStorage.getItem('token');
+    setToken(storedToken);
+    if (storedToken) {
       setIsAuthenticated(true);
     } else {
       setIsAuthenticated(false);
@@ -58,9 +60,9 @@ export const AuthProvider = ({children}) => {
         username: username,
         password: password,
       });
-      console.log(response.data, 'response');
       if (response.status === 200) {
         setIsLoading(false);
+
         AsyncStorage.setItem('token', `${response?.data?.token}`);
         showMessage({
           message: response?.data?.message || 'Login Successfull ',

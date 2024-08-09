@@ -4,12 +4,17 @@ import {
   Image,
   StyleSheet,
   FlatList,
-  ScrollView,
+  TouchableOpacity,
 } from 'react-native';
 import React, {useCallback, useEffect, useState} from 'react';
 import axios from 'axios';
 import {apis} from '../../../utils/api';
+import {useNavigation} from '@react-navigation/native';
+import ScreenNames from '../../../constants/Screens';
+// import {showMessage} from 'react-native-flash-message';
+
 const CarFacility = props => {
+  const navigation = useNavigation();
   const getDataApi = apis.baseUrl + apis.offers;
 
   const [offers, setOffers] = useState([]);
@@ -17,9 +22,21 @@ const CarFacility = props => {
   const getOffers = useCallback(async () => {
     try {
       const res = await axios.get(getDataApi);
-      setOffers(res.data.discounts);
+      if (res?.data?.code === 200) {
+        // showMessage({
+        //   message: 'Success',
+        //   description: 'Data fetched successfully',
+        //   type: 'success',
+        // });
+        setOffers(res.data.discounts);
+      }
     } catch (error) {
       console.error('This is error', error.message);
+      // showMessage({
+      //   message: 'Error',
+      //   description: error.message,
+      //   type: 'danger',
+      // });
     }
   }, []);
 
@@ -31,15 +48,26 @@ const CarFacility = props => {
     <View style={styles.carpropertiesbdy}>
       <FlatList
         horizontal
+        showsHorizontalScrollIndicator={false}
+        showsVerticalScrollIndicator={false}
         data={offers}
         style={{width: '100%', flex: 1}}
         contentContainerStyle={{gap: 20}}
         renderItem={({item}) => (
-          <View style={styles.carair}>
+          <TouchableOpacity
+            style={styles.carair}
+            onPress={() =>
+              navigation.navigate(ScreenNames.productdetails, item?.id)
+            }>
             <View style={{height: 212, width: 180}}>
               <Image
                 source={{uri: apis.baseImgUrl + item?.image}}
-                style={{width: '100%', height: '100%', borderRadius: 5}}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  borderRadius: 5,
+                  objectFit: 'fill',
+                }}
               />
             </View>
             <Text
@@ -54,7 +82,7 @@ const CarFacility = props => {
               }}>
               {item.discount_name}
             </Text>
-          </View>
+          </TouchableOpacity>
         )}
       />
       {/* <View style={{flex: 1}} /> */}

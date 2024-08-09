@@ -22,11 +22,7 @@ const ScreenNames = {
   cancelledOrderDetails: 'CancelledOrderDetails',
   rating: 'Rating',
   heading: 'Heading',
-  aboutus: 'AboutUs',
-  privacypolicy: 'PrivacyPolicy',
-  returnpolicy: 'ReturnPolicy',
-  termsofuse: 'TermsOfUse',
-  contactus: 'ContactUs',
+
   notification: 'Notification',
   dashboad: 'Dashboad',
   customisecar: 'CustomiseCar',
@@ -35,7 +31,6 @@ const ScreenNames = {
   colorsection: 'ColorSection',
   wheelsection: 'WheelSection',
   colorsectionone: 'ColorSectionOne',
-  checkout: 'CheckOut',
   wheelprice: 'WheelPrice',
   pricedetails: 'PriceDetails',
   thankyou: 'ThankYou',
@@ -94,6 +89,21 @@ const ScreenNames = {
   // *************************************** Drawer ***************************
 
   drawerHome: 'drawerHome',
+
+  checkout: 'CheckoutPage',
+
+  // *************************************** Static Pages ***************************
+  aboutus: 'AboutUs',
+  privacypolicy: 'PrivacyPolicy',
+  returnpolicy: 'ReturnPolicy',
+  refundPolicy: 'RefundPolicy',
+  termsAndConditions: 'TermsAndConditions',
+  termsofuse: 'TermsOfUse',
+  contactus: 'ContactUs',
+  feedback:'Feedback',
+  purchaseGiftCard:'PurchaseGiftCard',
+  customerSupport:'CustomerSupport',
+  reward:'Rewards'
 };
 
 export default ScreenNames;

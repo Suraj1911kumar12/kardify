@@ -10,6 +10,7 @@ import {
 import React, {useEffect, useState} from 'react';
 import axios from 'axios';
 import {apis} from '../../../utils/api';
+import {Color} from '../../../styles/Color';
 
 const width = Dimensions.get('screen').width;
 const Brands = () => {
@@ -55,7 +56,10 @@ const Brands = () => {
         }}>
         Brands
       </Text>
-      <ScrollView horizontal={true}>
+      <ScrollView
+        showsHorizontalScrollIndicator={false}
+        showsVerticalScrollIndicator={false}
+        horizontal={true}>
         {brands &&
           brands?.map((ele, i) => {
             return (
@@ -78,7 +82,7 @@ const Brands = () => {
                   <Text
                     numberOfLines={1}
                     ellipsizeMode="tail"
-                    style={{textAlign: 'center'}}>
+                    style={{textAlign: 'center', color: Color.white}}>
                     {ele?.brand_name}
                   </Text>
                 </View>

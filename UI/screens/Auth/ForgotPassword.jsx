@@ -128,7 +128,7 @@ const ForgotPassword = (props) => {
         </TouchableOpacity>
         <View style={styles.cmnimg}>
           <Image
-            source={require('../../assets/images/Auth/authcmnbdy.png')}
+            source={require('../../../assets/images/Auth/authcmnbdy.png')}
             resizeMode="cover"
             style={{ width: SCREEN_WIDTH / 1, height: SCREEN_HEIGHT / 4 }}
           />

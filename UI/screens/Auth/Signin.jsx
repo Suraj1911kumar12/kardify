@@ -21,6 +21,7 @@ import {useDispatch} from 'react-redux';
 import {UseAuth} from '../../context/AuthContext';
 import ContinueWith from '../../component/ContinueWith';
 import SigninTemplate from '../../component/SigninTemplate';
+import {Color} from '../../styles/Color';
 
 const Signin = props => {
   const auth = UseAuth();
@@ -164,13 +165,13 @@ const Signin = props => {
           </View>
           <View style={styles.sclmediacmnbdy}>
             <TouchableOpacity
-              onPress={() =>
-                props.navigation.navigate(ScreenNames.ChangePassword)
-              }
+              // onPress={() =>
+              //   props.navigation.navigate(ScreenNames.ChangePassword)
+              // }
               style={styles.googlebdy}>
               <Icon
                 name="google"
-                style={{fontSize: 25, marginHorizontal: 20}}
+                style={{fontSize: 25, marginHorizontal: 20, color: Color.white}}
               />
               <Text
                 style={{color: '#ffffff', fontWeight: '500', lineHeight: 23}}>

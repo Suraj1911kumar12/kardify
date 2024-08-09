@@ -24,6 +24,7 @@ import {useNavigation} from '@react-navigation/native';
 
 const MainHome = props => {
   const auth = UseAuth();
+  const navigation = useNavigation();
 
   return (
     <SafeAreaView style={styles.container}>

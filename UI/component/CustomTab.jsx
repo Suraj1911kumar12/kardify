@@ -1,16 +1,41 @@
-import {StyleSheet, Text, View} from 'react-native';
-import React from 'react';
+import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import React, {useState} from 'react';
 import {Color} from '../styles/Color';
 
-const CustomTab = () => {
+const CustomTab = ({selected, setSelected}) => {
+  const tabsVal = [
+    {
+      id: 1,
+      name: 'Current Orders',
+      value: 0,
+    },
+    {
+      id: 2,
+      name: 'Past Orders',
+      value: 1,
+    },
+  ];
+
   return (
     <View style={styles.container}>
-      <View style={styles.tabs}>
-        <Text style={styles.text}>Home</Text>
-      </View>
-      <View style={styles.tabs}>
-        <Text style={styles.text}>Home</Text>
-      </View>
+      {tabsVal.map((elem, index) => (
+        <TouchableOpacity
+          style={[
+            styles.tabs,
+            {
+              backgroundColor:
+                selected === elem.value ? Color.black : Color.white,
+            },
+          ]}
+          onPress={() => setSelected(elem.value)}>
+          <Text
+            style={{
+              color: selected === elem.value ? Color.white : Color.black,
+            }}>
+            {elem.name}
+          </Text>
+        </TouchableOpacity>
+      ))}
     </View>
   );
 };
@@ -33,7 +58,10 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Color.black,
+
     color: Color.white,
+    padding: 5,
+    borderRadius: 25,
   },
+  text: {},
 });

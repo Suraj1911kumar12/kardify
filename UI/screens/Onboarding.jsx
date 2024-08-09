@@ -5,6 +5,7 @@ import {
   SafeAreaView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import React, {useState} from 'react';
@@ -73,62 +74,38 @@ const Onboarding = props => {
 
   if (!showHomePage) {
     return (
-      <AppIntroSlider
-        data={data}
-        renderItem={({item}) => <Slides item={item} />}
-        activeDotStyle={{
-          backgroundColor: Color.yellow,
-          marginBottom: 60,
-        }}
-        dotStyle={{
-          backgroundColor: Color.white,
-          marginBottom: 60,
-        }}
-        renderNextButton={() => (
-          <View
-            style={{
-              justifyContent: 'center',
-              alignItems: 'center',
-              width: SCREEN_WIDTH,
-              flex: 1,
-              marginVertical: 10,
-            }}>
-            <Text style={{color: Color.white, fontWeight: 'bold'}}>Next</Text>
-          </View>
-        )}
-        renderDoneButton={() => (
-          <View style={{width: SCREEN_WIDTH, marginBottom: 50}}>
-            <View style={styles.button}>
-              <Text
-                style={{
-                  textAlign: 'center',
-                  fontSize: height / 45,
-                  Color: Color.white,
-                  fontWeight: 'bold',
-                }}>
-                Continue
-              </Text>
+      <View style={{flex: 1}}>
+        <TouchableOpacity
+          style={styles.skipButton}
+          onPress={() => navigation.navigate(ScreenNames.LoginScreen)}>
+          <Text style={styles.skipButtonText}>Skip</Text>
+        </TouchableOpacity>
+        <AppIntroSlider
+          data={data}
+          renderItem={({item}) => <Slides item={item} />}
+          activeDotStyle={{
+            backgroundColor: Color.yellow,
+            marginBottom: 60,
+          }}
+          dotStyle={{
+            backgroundColor: Color.white,
+            marginBottom: 60,
+          }}
+          renderNextButton={() => (
+            <View style={styles.buttonContainer}>
+              <Text style={styles.buttonText}>Next</Text>
             </View>
-          </View>
-        )}
-        onDone={() =>
-          setDoneValue(navigation.navigate(ScreenNames.LoginScreen))
-        }
-        // showSkipButton
-        // renderSkipButton={() => (
-        //   <View
-        //     style={{
-        //       position: 'absolute',
-        //       width: 10,
-        //       height: 10,
-        //       flex: 1,
-        //       justifyContent: 'flex-start',
-        //       borderWidth: 1,
-        //     }}>
-        //     <Text>Skip</Text>
-        //   </View>
-        // )}
-      />
+          )}
+          renderDoneButton={() => (
+            <View style={styles.buttonContainer}>
+              <Text style={styles.buttonText}>Continue</Text>
+            </View>
+          )}
+          onDone={() =>
+            setDoneValue(navigation.navigate(ScreenNames.LoginScreen))
+          }
+        />
+      </View>
     );
   }
 
@@ -163,17 +140,35 @@ const styles = StyleSheet.create({
   desc: {
     color: Color.grey,
     textAlign: 'center',
-    // opacity: 0.8,
   },
-  button: {
-    width: width / 1.35,
-    height: height / 18,
-    alignSelf: 'center',
-    alignItems: 'center',
-    borderRadius: 25,
+  buttonContainer: {
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#424750',
-    backgroundColor: Color.yellow,
+    alignItems: 'center',
+    width: '100%',
+    paddingHorizontal: 20,
+    marginBottom: 50,
+  },
+  buttonText: {
+    color: Color.white,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    fontSize: height / 45,
+  },
+  skipButton: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
+    zIndex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 100,
+    height: 50,
+    borderRadius: 20,
+  },
+  skipButtonText: {
+    color: Color.white,
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });

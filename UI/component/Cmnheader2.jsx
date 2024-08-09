@@ -13,6 +13,7 @@ import MiIcon from 'react-native-vector-icons/MaterialIcons';
 
 import EnIcon from 'react-native-vector-icons/Entypo';
 import {useNavigation} from '@react-navigation/native';
+import { Color } from '../styles/Color';
 
 const Cmnhdr2 = props => {
   const navigation = useNavigation();
@@ -24,7 +25,7 @@ const Cmnhdr2 = props => {
       {backIcon ? (
         <View style={styles.firstView}>
           <Pressable onPress={() => navigation.goBack()}>
-            <MiIcon name="keyboard-arrow-left" style={{fontSize: 30}} />
+            <MiIcon name="keyboard-arrow-left" style={{fontSize: 30,color: Color.white}} />
           </Pressable>
         </View>
       ) : (
@@ -33,7 +34,7 @@ const Cmnhdr2 = props => {
 
       {title ? (
         <View>
-          <Text style={{fontWeight: 'bold', fontSize: 24}}>{title}</Text>
+          <Text style={{fontWeight: 'bold', fontSize: 24,color: Color.white}}>{title}</Text>
         </View>
       ) : (
         <View></View>
@@ -48,7 +49,7 @@ const Cmnhdr2 = props => {
         <TouchableOpacity
           // onPress={props.notification}
           style={styles.circleView}>
-          <Icon name="bell-ring-outline" style={{fontSize: 20}} />
+          <Icon name="bell-ring-outline" style={{fontSize: 20,color: Color.grey}} />
         </TouchableOpacity>
       </View>
     </View>

@@ -42,7 +42,10 @@ const TopSellingCategories = props => {
         <Text style={styles.catText}>Top Selling Products</Text>
       </View>
 
-      <ScrollView horizontal={true}>
+      <ScrollView
+        showsHorizontalScrollIndicator={false}
+        showsVerticalScrollIndicator={false}
+        horizontal={true}>
         {topProduct &&
           topProduct?.map((ele, i) => {
             return (

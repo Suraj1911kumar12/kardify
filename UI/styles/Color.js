@@ -11,7 +11,9 @@ export const Color = {
   primary: '#F1F3F5',
   yellow: '#DFB852',
   lightBlack: '#1C1F22',
-  grey: '#DADADA',
+  grey: '#989898',
   red: '#EF4136',
   btnBlack: '#33383D',
+  btnGrey:'#33383E',
+  bgBlack:'#353A40'
 };

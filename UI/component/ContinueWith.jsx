@@ -1,5 +1,6 @@
 import {Dimensions, StyleSheet, Text, View} from 'react-native';
 import React from 'react';
+import {Color} from '../styles/Color';
 
 const {width, height} = Dimensions.get('screen');
 
@@ -17,7 +18,7 @@ const ContinueWith = () => {
       }}>
       <Text style={styles.line}></Text>
       <View style={{flex: 2, alignItems: 'center', justifyContent: 'center'}}>
-        <Text> or continue with</Text>
+        <Text style={{color: Color.white}}> or continue with</Text>
       </View>
       <Text style={styles.line}></Text>
     </View>

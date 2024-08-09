@@ -13,7 +13,6 @@ import LinearGradient from 'react-native-linear-gradient';
 import React, {useState} from 'react';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
-
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Feather from 'react-native-vector-icons/Feather';
 import {useDispatch} from 'react-redux';
@@ -194,21 +193,20 @@ const SignUpOneScreen = props => {
           <ContinueWith />
         </View>
         <View style={styles.sclmediacmnbdy}>
-            <TouchableOpacity
-              onPress={() =>
-                props.navigation.navigate(ScreenNames.ChangePassword)
-              }
-              style={styles.googlebdy}>
-              <Icon
-                name="google"
-                style={{fontSize: 25, marginHorizontal: 20}}
-              />
-              <Text
-                style={{color: '#ffffff', fontWeight: '500', lineHeight: 23}}>
-                Google
-              </Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            onPress={() =>
+              props.navigation.navigate(ScreenNames.ChangePassword)
+            }
+            style={styles.googlebdy}>
+            <Icon
+              name="google"
+              style={{fontSize: 25, marginHorizontal: 20, color: Color.white}}
+            />
+            <Text style={{color: '#ffffff', fontWeight: '500', lineHeight: 23}}>
+              Google
+            </Text>
+          </TouchableOpacity>
+        </View>
         <TouchableOpacity
           onPress={() => props.navigation.navigate(ScreenNames.SignUpDetails)}
           style={{

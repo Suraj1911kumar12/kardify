@@ -8,6 +8,7 @@ import {
 import React from 'react';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {TextInput} from 'react-native';
+import {Color} from '../styles/Color';
 
 const {width} = Dimensions.get('window');
 
@@ -21,10 +22,11 @@ const FullSearchBar = () => {
           style={styles.input}
           placeholder="Search "
           placeholderTextColor={'#222'}
+
           // onChangeText={onChangeText}
         />
         <TouchableOpacity style={styles.mike}>
-          <Icon name="mic" size={24} color="#fff" />
+          <Icon name="mic" size={20} color={Color.white} />
         </TouchableOpacity>
       </View>
     </View>
@@ -43,13 +45,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 50,
     paddingHorizontal: 10,
+    padding: 5,
   },
   input: {
     flex: 1,
     width: 'auto',
-    height: 35,
-    margin: 12,
-    fontSize: 10,
+    height: 40,
+    // margin: 12,
+    // borderWidth:2,
+    fontSize: 15,
     flexDirection: 'row',
     alignItems: 'center',
     color: '#222',
@@ -57,7 +61,11 @@ const styles = StyleSheet.create({
   mike: {
     backgroundColor: '#222',
     borderRadius: 50,
-    padding: 10,
+    padding: 2,
     color: '#fff',
+    height: 24,
+    width: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

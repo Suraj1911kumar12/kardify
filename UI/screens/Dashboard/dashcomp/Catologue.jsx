@@ -1,32 +1,26 @@
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
-  Image,
-  ScrollView,
   StyleSheet,
   TouchableOpacity,
+  ScrollView,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
 import axios from 'axios';
 import {apis} from '../../../utils/api';
-const Catalogue = props => {
+import {useNavigation} from '@react-navigation/native';
+import ScreenNames from '../../../constants/Screens';
+
+const Catalogue = () => {
+  const navigation = useNavigation();
   const categoryApi = apis.baseUrl + apis.category;
 
-  const arr = [
-    {id: 1, name: 'Exterior'},
-    {id: 1, name: 'Interior'},
-    {id: 1, name: 'AUDIO/VIDEO'},
-    {id: 1, name: 'LIGHTS'},
-    {id: 1, name: 'CAR CARE'},
-    {id: 1, name: 'INSTALLATION'},
-  ];
-
   const [category, setCategory] = useState([]);
+  const [showAll, setShowAll] = useState(false);
 
   const getCategoryData = async () => {
     try {
       const res = await axios.get(categoryApi);
-      // console.log("res for categorty", res.data.categories);
       setCategory(res.data.categories);
     } catch (error) {
       console.error(error, 'category Error');
@@ -37,26 +31,37 @@ const Catalogue = props => {
     getCategoryData();
   }, []);
 
+  const displayedCategories = showAll ? category : category.slice(0, 6); // Display two rows initially
+
   return (
     <View style={{width: '95%', alignSelf: 'center'}}>
       <View style={styles.catHeader}>
         <Text style={styles.catText}>Catalogue</Text>
       </View>
 
-      <View style={styles.grid}>
-        {arr &&
-          arr.map((ele, i) => {
-            return (
-              <TouchableOpacity
-                key={i}
-                style={[styles.boxView, {marginLeft: i == 0 ? 10 : 0}]}>
-                <Text numberOfLines={2} style={styles.valText}>
-                  {ele?.name}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-      </View>
+      <ScrollView>
+        <View style={styles.grid}>
+          {displayedCategories.map((ele, i) => (
+            <TouchableOpacity
+              onPress={() =>
+                navigation.navigate(ScreenNames.productsList, ele?.id)
+              }
+              key={ele?.id}
+              style={[styles.boxView, {marginLeft: i % 3 === 0 ? 10 : 0}]}>
+              <Text numberOfLines={2} style={styles.valText}>
+                {ele?.category_name}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        <TouchableOpacity
+          style={styles.viewAllBtn}
+          onPress={() => setShowAll(!showAll)}>
+          <Text style={styles.viewAllText}>
+            {showAll ? 'Show Less' : 'View All'}
+          </Text>
+        </TouchableOpacity>
+      </ScrollView>
     </View>
   );
 };
@@ -76,7 +81,6 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
   },
   grid: {
-    display: 'flex',
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
@@ -87,10 +91,10 @@ const styles = StyleSheet.create({
     width: 87,
     borderWidth: 1,
     borderColor: 'white',
-    borderRadius: 30,
+    borderRadius: 10,
     marginBottom: 30,
     backgroundColor: '#1C1F22',
-    elevation: 1,
+    elevation: 5,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 20,
@@ -105,5 +109,14 @@ const styles = StyleSheet.create({
   viewAllBtn: {
     alignSelf: 'center',
     borderRadius: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: '#1C1F22',
+    marginVertical: 20,
+  },
+  viewAllText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

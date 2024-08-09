@@ -10,14 +10,42 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {Color} from '../../styles/Color';
 import Cmnhdr from '../../component/Cmnhdr';
-
+import axios from '../../../axios';
+import {showMessage} from 'react-native-flash-message';
 const {width} = Dimensions.get('screen');
 
 const Stories = () => {
   const arr = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+  const [stories, setStories] = useState([]);
+
+  const getStories = useCallback(async () => {
+    try {
+      const response = await axios.post('/fetch-all-stories-customer');
+      if (response.data.code === 200) {
+        setStories(response.data.data);
+      } else {
+        showMessage({
+          message: 'Error',
+          description: response.data.message,
+          type: 'danger',
+        });
+      }
+    } catch (error) {
+      // console.log(error.response.data.message);
+      showMessage({
+        message: error.response.data.message || 'Failed to fetch stories',
+        // description: error.response.data.message || 'Failed to fetch stories',
+        type: 'danger',
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    getStories();
+  }, []);
 
   const renderItem = ({item}) => (
     <View style={styles.card}>
@@ -27,7 +55,7 @@ const Stories = () => {
         resizeMode="contain"
       />
       <View style={{gap: 4}}>
-        <Text>
+        <Text style={{color: Color.white}}>
           Lorem Ipsum is simply dummy text of the printing and typesetting
           industry.
         </Text>
@@ -55,9 +83,11 @@ const Stories = () => {
             }
           />
           <FlatList
-            data={arr}
+            data={stories.length > 0 ? stories : arr}
             renderItem={renderItem}
-            keyExtractor={item => item.toLocaleString()}
+            keyExtractor={item =>
+              item?.id?.toLocaleString() || item?.toLocaleString()
+            }
             numColumns={2} // Display 2 items per row
             contentContainerStyle={{padding: 10, gap: 2, marginBottom: 50}}
           />
@@ -80,7 +110,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   card: {
-    padding: 5,
+    paddingHorizontal: 5,
+    paddingVertical: 10,
     flex: 1,
     width: width / 2,
     backgroundColor: Color.lightBlack,
@@ -92,5 +123,7 @@ const styles = StyleSheet.create({
   readMore: {
     color: Color.yellow,
     textAlign: 'center',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

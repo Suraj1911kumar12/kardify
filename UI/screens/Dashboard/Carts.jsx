@@ -15,8 +15,17 @@ import {Color} from '../../styles/Color';
 import axios from 'axios';
 import {apis} from '../../utils/api';
 import CustomButton from '../../component/CustomButton';
+import Icon from 'react-native-vector-icons/AntDesign';
+import OrderStatusLine from '../../component/OrderSts';
+import {useNavigation} from '@react-navigation/native';
+import ScreenNames from '../../constants/Screens';
+import {useSelector} from 'react-redux';
 
 const Carts = () => {
+  const addedCartData = useSelector(state => state);
+
+  const navigation = useNavigation();
+
   const getCartApi = apis.baseUrl + apis.getCart;
 
   const [addBtn, setAddBtn] = useState(1);
@@ -26,14 +35,16 @@ const Carts = () => {
     try {
       const res = await axios.get(getCartApi);
       // console.log(res?.data?.carts);
-      setCartData(res?.data?.carts);
+      // setCartData(res?.data?.carts);
     } catch (error) {
       console.log(error, 'Error while getting carts values');
     }
   }, []);
 
   useEffect(() => {
-    getDataCart();
+    // getDataCart();
+    setCartData(addedCartData.item);
+    // console.log(cartData, 'cartdata');
   }, []);
 
   const dummyData = [
@@ -65,19 +76,37 @@ const Carts = () => {
 
   const renderItem = ({item}) => (
     <View style={styles.itemContainer}>
+      {console.log(item?.default_price,'itemgfahhgvjghjgjgjjh')}
+      <TouchableOpacity style={{position: 'absolute', top: 5, right: 5}}>
+        <Icon name="close" size={20} color={Color.white} />
+      </TouchableOpacity>
+
       <View style={styles.itemImageContainer}>
-        <Image source={item.image} style={styles.itemImage} />
+        <Image
+          source={{uri: apis.baseImgUrl + item?.images[0]?.image_url}}
+          style={styles.itemImage}
+          resizeMode="cover"
+
+        />
       </View>
       <View style={styles.itemTitleContainer}>
-        <Text style={styles.itemTitle}>{item.title}</Text>
-        <Text>{item.rating}</Text>
+        <Text style={styles.itemTitle}>{item?.product_name}</Text>
+        <Text style={{color: Color.white}}> {item.rating}</Text>
         <CustomBtn />
-        <View>
-          <Text>{item.price}</Text>
+        <View
+          style={{
+            flexDirection: 'row',
+            // justifyContent: 'center',
+            gap: 10,
+            alignItems: 'center',
+          }}>
+          <Text style={{color: Color.grey, fontSize: 20}}>₹ {item.price}</Text>
           <Text
             style={{
               textDecorationLine: 'line-through',
               textDecorationStyle: 'solid',
+              color: Color.grey,
+              fontSize: 13,
             }}>
             M.R.P : {item.mrp}.00
           </Text>
@@ -111,10 +140,14 @@ const Carts = () => {
           <Text style={styles.text}>Shipping Fee </Text>
         </View>
         <View style={[styles.pData]}>
-          <Text style={styles.text}>Total MRP</Text>
-          <Text style={styles.text}>Discount on MRP </Text>
-          <Text style={styles.text}>Coupon Discount</Text>
-          <Text style={styles.text}>Shipping Fee </Text>
+          <Text style={styles.text}>₹ 8,000</Text>
+          <Text style={styles.text}> ₹ 1,080</Text>
+          <Text style={styles.text}>
+            <TouchableOpacity style={styles.addressChange}>
+              <Text style={styles.addressTextChange}>Apply Coupan</Text>
+            </TouchableOpacity>
+          </Text>
+          <Text style={styles.text}>Free </Text>
         </View>
       </View>
       <View style={styles.hr} />
@@ -123,7 +156,7 @@ const Carts = () => {
           <Text style={styles.text}>Total MRP</Text>
         </View>
         <View style={styles.pData}>
-          <Text style={styles.text}>8,000</Text>
+          <Text style={styles.text}> ₹ 8,000</Text>
         </View>
       </View>
     </View>
@@ -137,6 +170,7 @@ const Carts = () => {
         style={{height: '100%', width: '100%'}}>
         <Cmnhdr2 backIcon title="Cart" />
         <ScrollView style={{paddingBottom: 10, marginBottom: 60}}>
+          <OrderStatusLine status="Out for Delivery" />
           {/* <View style={styles.cardContainer}> */}
           <View style={styles.address}>
             <Text style={styles.addressText}>
@@ -147,14 +181,17 @@ const Carts = () => {
             </TouchableOpacity>
           </View>
           <FlatList
-            data={cartData || dummyData}
+            data={cartData}
             renderItem={renderItem}
             keyExtractor={item => item.id.toLocaleString()}
             numColumns={1} // Display 2 items per row
             contentContainerStyle={{padding: 10, gap: 2, marginBottom: 50}}
           />
           <PriceDetails />
-          <CustomButton title="Proceed to checkout " />
+          <CustomButton
+            title="Proceed to checkout "
+            onPressButton={() => navigation.navigate(ScreenNames.checkout)}
+          />
         </ScrollView>
         {/* <View> */}
         {/* </View> */}
@@ -179,6 +216,7 @@ const styles = StyleSheet.create({
   },
   addressText: {
     flex: 3,
+    color: Color.white,
   },
   addressChange: {
     flex: 1,
@@ -192,7 +230,8 @@ const styles = StyleSheet.create({
   itemContainer: {
     flex: 1,
     backgroundColor: Color.lightBlack,
-    padding: 20,
+    paddingVertical: 25,
+    paddingHorizontal: 20,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -200,6 +239,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     elevation: 5,
     marginTop: 10,
+    position: 'relative',
   },
   itemTitle: {
     flex: 1,
@@ -260,6 +300,9 @@ const styles = StyleSheet.create({
   pData: {
     flex: 1,
     gap: 10,
+    color: Color.white,
+  },
+  text: {
     color: Color.white,
   },
 });

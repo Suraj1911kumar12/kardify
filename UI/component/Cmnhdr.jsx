@@ -5,6 +5,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import MiIcon from 'react-native-vector-icons/MaterialIcons';
 
 import EnIcon from 'react-native-vector-icons/Entypo';
+import {Color} from '../styles/Color';
 
 const Cmnhdr = props => {
   const {backIcon, title} = props;
@@ -14,8 +15,10 @@ const Cmnhdr = props => {
     <View style={styles.header}>
       {backIcon ? (
         <View style={styles.firstView}>
-          <View style={{gap: 2}}>
-            <Text style={{fontSize: 18}}>Welcome Suraj</Text>
+          <View style={{gap: 2, color: Color.white}}>
+            <Text style={{fontSize: 18, color: Color.white}}>
+              Welcome Suraj
+            </Text>
             <View
               style={{
                 flexDirection: 'row',
@@ -23,9 +26,15 @@ const Cmnhdr = props => {
                 justifyContent: 'center',
                 gap: 3,
               }}>
-              <EnIcon name="location-pin" style={{fontSize: 15}} />
-              <Text>Kormangala ,Bangalore</Text>
-              <MiIcon name="arrow-drop-down" style={{fontSize: 15}} />
+              <EnIcon
+                name="location-pin"
+                style={{fontSize: 15, color: Color.white}}
+              />
+              <Text style={{color: Color.white}}>Kormangala ,Bangalore</Text>
+              <MiIcon
+                name="arrow-drop-down"
+                style={{fontSize: 15, color: Color.white}}
+              />
             </View>
           </View>
         </View>
@@ -35,9 +44,9 @@ const Cmnhdr = props => {
 
       {title ? (
         <View>
-          <Text style={{fontWeight: 'bold', fontSize: 24
-            
-          }}>{title}</Text>
+          <Text style={{fontWeight: 'bold', fontSize: 24, color: Color.white}}>
+            {title}
+          </Text>
         </View>
       ) : (
         <View></View>
@@ -47,12 +56,15 @@ const Cmnhdr = props => {
         <TouchableOpacity
           // onPress={props.notification}
           style={styles.circleView}>
-          <Icon name="heart" style={{fontSize: 20}} />
+          <Icon name="heart" style={{fontSize: 20, color: Color.grey}} />
         </TouchableOpacity>
         <TouchableOpacity
           // onPress={props.notification}
           style={styles.circleView}>
-          <Icon name="bell-ring-outline" style={{fontSize: 20}} />
+          <Icon
+            name="bell-ring-outline"
+            style={{fontSize: 20, color: Color.grey}}
+          />
         </TouchableOpacity>
       </View>
     </View>

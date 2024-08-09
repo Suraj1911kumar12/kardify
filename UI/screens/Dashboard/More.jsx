@@ -15,6 +15,7 @@ import ScreenNames from '../../constants/Screens';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Cmnhdr from '../../component/Cmnhdr';
 import {UseAuth} from '../../context/AuthContext';
+import {Color} from '../../styles/Color';
 
 const More = props => {
   const auth = UseAuth();
@@ -29,67 +30,78 @@ const More = props => {
       id: 2,
       name: 'Stories',
       icon: 'all-inbox',
-      onPress: '',
+      onPress: () => props.navigation.navigate(ScreenNames.stories),
     },
     {
       id: 3,
       name: 'Contact Us',
       icon: 'all-inbox',
-      onPress: '',
+      onPress: () => props.navigation.navigate(ScreenNames.contactus),
+    },
+    {
+      id: 13,
+      name: 'About Us',
+      icon: 'all-inbox',
+      onPress: () => props.navigation.navigate(ScreenNames.aboutus),
     },
     {
       id: 4,
       name: 'Privacy Policy',
       icon: 'all-inbox',
-      onPress: '',
+      onPress: () => props.navigation.navigate(ScreenNames.privacypolicy),
     },
     {
       id: 5,
       name: 'Return Policy',
       icon: 'all-inbox',
-      onPress: '',
+      onPress: () => props.navigation.navigate(ScreenNames.returnpolicy),
+    },
+    {
+      id: 5,
+      name: 'Refund Policy',
+      icon: 'all-inbox',
+      onPress: () => props.navigation.navigate(ScreenNames.refundPolicy),
     },
     {
       id: 6,
       name: 'Shipping Policy',
       icon: 'all-inbox',
-      onPress: '',
+      onPress: () => props.navigation.navigate(ScreenNames.shippingpolicy),
     },
     {
       id: 7,
       name: 'Feedback',
       icon: 'all-inbox',
-      onPress: '',
+      onPress: () => props.navigation.navigate(ScreenNames.feedback),
+
     },
     {
       id: 8,
       name: 'Purchase Gift card',
       icon: 'all-inbox',
-      onPress: '',
+      onPress: () => props.navigation.navigate(ScreenNames.purchaseGiftCard),
+
     },
-    {
-      id: 9,
-      name: 'Shipping Policy',
-      icon: 'all-inbox',
-      onPress: '',
-    },
+   
     {
       id: 10,
       name: 'Customer Support',
       icon: 'all-inbox',
-      onPress: '',
+      onPress: () => props.navigation.navigate(ScreenNames.customerSupport),
+
     },
     {
       id: 11,
       name: 'Rewards',
       icon: 'all-inbox',
-      onPress: '',
+      onPress: () => props.navigation.navigate(ScreenNames.reward),
+
     },
     {
       id: 12,
       name: 'Terms & Condition',
       icon: 'all-inbox',
-      onPress: '',
+      onPress: () => props.navigation.navigate(ScreenNames.termsAndConditions),
     },
   ];
   return (
@@ -140,10 +152,16 @@ const More = props => {
                         alignItems: 'center',
                         gap: 10,
                       }}>
-                      <Icon name={elem.icon} style={{fontSize: 20}} />
+                      <Icon
+                        name={elem.icon}
+                        style={{fontSize: 20, color: Color.grey}}
+                      />
                       <Text style={{color: '#ffffff'}}>{elem.name}</Text>
                     </View>
-                    <Icon name="arrow-forward-ios" style={{fontSize: 20}} />
+                    <Icon
+                      name="arrow-forward-ios"
+                      style={{fontSize: 20, color: Color.white}}
+                    />
                   </View>
                 </View>
               </TouchableOpacity>
@@ -160,7 +178,10 @@ const More = props => {
                     <Icon name={'all-inbox'} style={{fontSize: 20}} />
                     <Text style={{color: '#ffffff'}}>Log Out</Text>
                   </View>
-                  <Icon name="arrow-forward-ios" style={{fontSize: 20}} />
+                  <Icon
+                    name="arrow-forward-ios"
+                    style={{fontSize: 20, color: Color.grey}}
+                  />
                 </View>
               </View>
             </TouchableOpacity>

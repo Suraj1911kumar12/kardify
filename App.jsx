@@ -1,15 +1,15 @@
 import Route from './UI/Routes/Route';
 import {Provider} from 'react-redux';
-import store from './UI/redux/store';
 import {useEffect} from 'react';
 import SplashScreen from 'react-native-splash-screen';
+import Store from './UI/redux/store';
 
 const App = () => {
   useEffect(() => {
     SplashScreen.hide();
   }, []);
   return (
-    <Provider store={store}>
+    <Provider store={Store}>
       <Route />
     </Provider>
   );
