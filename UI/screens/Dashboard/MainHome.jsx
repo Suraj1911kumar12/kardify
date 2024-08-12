@@ -21,6 +21,7 @@ import FullSearchBar from '../../component/FullSearchBar';
 import Cmnhdr from '../../component/Cmnhdr';
 import ScreenNames from '../../constants/Screens';
 import {useNavigation} from '@react-navigation/native';
+import CustomButton from '../../component/CustomButton';
 
 const MainHome = props => {
   const auth = UseAuth();
@@ -152,6 +153,7 @@ const MainHome = props => {
               View Stories
             </Text>
           </ImageBackground>
+          {/* <CustomButton title="View Stories" /> */}
           <View style={{marginBottom: 20}}>
             <EngineHeading />
           </View>

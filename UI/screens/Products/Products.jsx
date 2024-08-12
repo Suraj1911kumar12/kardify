@@ -21,11 +21,14 @@ import {useNavigation} from '@react-navigation/native';
 import ScreenNames from '../../constants/Screens';
 import axios from '../../../axios';
 import {apis} from '../../utils/api';
+import {SCREEN_HEIGHT} from '../../styles/Size';
 
 const {width} = Dimensions.get('screen');
 
 const Products = props => {
-  const id = props.route.params;
+  const param = props.route.params;
+  console.log(param);
+
   const navigation = useNavigation();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -33,9 +36,7 @@ const Products = props => {
 
   const getProduct = useCallback(async () => {
     try {
-      const response = await axios.get(
-        `get-products-customer?category_id=${id}`,
-      );
+      const response = await axios.get(`get-products-customer?${param}`);
 
       if (response.data.code === 200) {
         setProducts(response.data.products);
@@ -75,52 +76,57 @@ const Products = props => {
 
   const renderItem = ({item}) => {
     return (
-      <TouchableOpacity
-        onPress={() =>
-          navigation.navigate(ScreenNames.productdetails, {
-            id: item?.id,
-          })
-        }
-        style={styles.card}>
-        {imageLoading[item?.id] && renderSkeletonLoader()}
-        <Image
-          source={{uri: apis.baseImgUrl + item?.images[0]?.image_url}}
-          style={[styles.image]}
-          resizeMode="cover"
-          // onLoadStart={() => handleImageLoadStart(item?.id)}
-          // onLoadEnd={() => handleImageLoadEnd(item?.id)}
-        />
-        {!imageLoading[item?.id] && (
-          <View style={{gap: 6, padding: 6}}>
-            <Text
-              style={{color: Color.white}}
-              numberOfLines={1} // Limits the text to one line and adds an ellipsis if it's too long
-              ellipsizeMode="tail" // Adds ellipsis at the end if the text overflows
-            >
-              {item?.product_name}
-            </Text>
-            <Text style={{color: Color.white}}>
-              <Icon name="star" size={20} color={Color.yellow} /> 4.9
-            </Text>
-            <View style={{flexDirection: 'row', gap: 5}}>
-              <Text style={{color: Color.white}}>
-                ₹
-                { item?.default_price -
-                  (item?.default_price * item?.discount) / 100}
-              </Text>
+      <>
+        <TouchableOpacity
+          onPress={() =>
+            navigation.navigate(ScreenNames.productdetails, {
+              id: item?.id,
+            })
+          }
+          style={styles.card}>
+          {imageLoading[item?.id] && renderSkeletonLoader()}
+          <Image
+            source={{uri: apis.baseImgUrl + item?.images[0]?.image_url}}
+            style={[styles.image]}
+            resizeMode="cover"
+            // onLoadStart={() => handleImageLoadStart(item?.id)}
+            // onLoadEnd={() => handleImageLoadEnd(item?.id)}
+          />
+          {!imageLoading[item?.id] && (
+            <View style={{gap: 6, padding: 6}}>
               <Text
-                style={{
-                  color: Color.grey,
-                  opacity: 0.5,
-                  textDecorationLine: 'line-through',
-                }}>
-                ₹{item?.default_price}
+                style={{color: Color.white}}
+                numberOfLines={1} // Limits the text to one line and adds an ellipsis if it's too long
+                ellipsizeMode="tail" // Adds ellipsis at the end if the text overflows
+              >
+                {item?.product_name}
               </Text>
+              <Text style={{color: Color.white}}>
+                <Icon name="star" size={20} color={Color.yellow} /> 4.9
+              </Text>
+              <View style={{flexDirection: 'row', gap: 5}}>
+                <Text style={{color: Color.white}}>
+                  ₹
+                  {item?.default_price -
+                    (item?.default_price * item?.discount) / 100}
+                </Text>
+                <Text
+                  style={{
+                    color: Color.grey,
+                    opacity: 0.5,
+                    textDecorationLine: 'line-through',
+                  }}>
+                  ₹{item?.default_price}
+                </Text>
+              </View>
             </View>
-          </View>
-        )}
-      </TouchableOpacity>
+          )}
+        </TouchableOpacity>
+      </>
     );
+  };
+  const renderNoData = () => {
+    return <Text>No Data</Text>;
   };
 
   return (
@@ -144,14 +150,25 @@ const Products = props => {
               numColumns={2}
               contentContainerStyle={{padding: 10, gap: 2, marginBottom: 50}}
             />
-          ) : (
+          ) : products.length > 0 ? (
             <FlatList
               data={products}
               renderItem={renderItem}
-              keyExtractor={item => item?.id.toString()}
+              keyExtractor={item => item?.id?.toString()}
               numColumns={2}
               contentContainerStyle={{padding: 10, gap: 2, marginBottom: 50}}
             />
+          ) : (
+            <View
+              style={{
+                flex: 1,
+                alignItems: 'center',
+                justifyContent: 'center',
+                // borderWidth: 2,
+                height: SCREEN_HEIGHT - 150,
+              }}>
+              <Text style={{color: Color.white, fontSize: 20}}>No data</Text>
+            </View>
           )}
         </ScrollView>
       </ImageBackground>

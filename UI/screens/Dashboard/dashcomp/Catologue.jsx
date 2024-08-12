@@ -44,7 +44,10 @@ const Catalogue = () => {
           {displayedCategories.map((ele, i) => (
             <TouchableOpacity
               onPress={() =>
-                navigation.navigate(ScreenNames.productsList, ele?.id)
+                navigation.navigate(
+                  ScreenNames.productsList,
+                  `category_id=${ele?.id}`,
+                )
               }
               key={ele?.id}
               style={[styles.boxView, {marginLeft: i % 3 === 0 ? 10 : 0}]}>

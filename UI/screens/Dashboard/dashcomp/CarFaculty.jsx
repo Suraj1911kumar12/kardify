@@ -57,7 +57,7 @@ const CarFacility = props => {
           <TouchableOpacity
             style={styles.carair}
             onPress={() =>
-              navigation.navigate(ScreenNames.productdetails, item?.id)
+              navigation.navigate(ScreenNames.productsList, item?.id)
             }>
             <View style={{height: 212, width: 180}}>
               <Image

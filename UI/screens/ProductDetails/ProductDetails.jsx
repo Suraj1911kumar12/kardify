@@ -2,6 +2,7 @@ import {
   FlatList,
   Image,
   ImageBackground,
+  Pressable,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -9,7 +10,6 @@ import {
   TouchableOpacity,
   useWindowDimensions,
   View,
-  ActivityIndicator,
 } from 'react-native';
 import React, {useCallback, useEffect, useState, useRef} from 'react';
 import Cmnhdr2 from '../../component/Cmnheader2';
@@ -21,16 +21,24 @@ import RenderHTML from 'react-native-render-html';
 import {addProduct} from '../../redux/slice/cartSlice';
 import {useDispatch, useSelector} from 'react-redux';
 import {UseAuth} from '../../context/AuthContext';
+import {showMessage} from 'react-native-flash-message';
+import {AirbnbRating} from 'react-native-ratings';
 
 const ProductDetails = ({route, navigation}) => {
   const auth = UseAuth();
   const {id} = route.params;
+  // console.log(id, 'id');
+
   const {width} = useWindowDimensions();
+
+  const [selectedAttribute, setSelectedAttribute] = useState(null); // State to store the selected attribute
+  const [attributes, setAttributes] = useState([]); // State to store attribute options
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false); // State to control dropdown visibility
+
   const [productDetail, setProductDetail] = useState([]);
   const [loading, setLoading] = useState(true); // Loading state
   const [imageIndex, setImageIndex] = useState(0); // State to keep track of the current image index
   const flatListRef = useRef(null); // Reference to the FlatList
-
   const [addData, setAddData] = useState({
     id: '',
     combination_id: '',
@@ -39,8 +47,31 @@ const ProductDetails = ({route, navigation}) => {
 
   const getProductDetails = useCallback(async () => {
     try {
-      const res = await axios.get(`/get-products-customer?product_id=${id}`);
-      setProductDetail(res?.data?.products);
+      const res = await axios.get(`/get-products-customer?product_id=${id}`, {
+        headers: {
+          Authorization: auth.token,
+        },
+      });
+      if (res.data.code === 200) {
+        setProductDetail(res?.data?.products);
+        setAddData({
+          id: res?.data?.products[0].id,
+          // combination_id: res?.data?.products[0].combination_id,
+          quantity: res?.data?.products[0].quantity,
+        });
+        const attributeOptions =
+          res?.data?.products[0]?.product_attributes_associations?.map(
+            attr => ({
+              label: attr.combination,
+              value: {
+                id: attr.id,
+                combination: attr.combination,
+                price: attr.price,
+              },
+            }),
+          );
+        setAttributes(attributeOptions || []);
+      }
     } catch (error) {
       console.error(error);
     } finally {
@@ -48,37 +79,55 @@ const ProductDetails = ({route, navigation}) => {
     }
   }, []);
 
-  const addToCart = async (id, combination_id, quantity) => {
+  const addToCart = async item => {
     try {
       const resp = await axios.post(
         '/add-to-cart',
         {
-          product_id: id,
-          combination_id: combination_id,
-          quantity: quantity,
+          product_id: addData.id,
+          combination_id: selectedAttribute?.id,
+          quantity: addData.quantity,
         },
         {
           headers: auth.token,
         },
       );
       if (resp.data.code === 200) {
-        console.log(resp);
+        // console.log(resp);
+        dispatch(addProduct(item));
+
+        console.log('Product added to cart successfully');
+        showMessage({
+          message: 'Product added to cart',
+          type: 'success',
+        });
+      } else {
+        console.log('Error adding product to cart');
       }
-    } catch (error) {}
+    } catch (error) {
+      console.error(error.respons.data.message, 'error');
+    }
   };
 
   useEffect(() => {
     getProductDetails();
   }, []);
 
+  console.log(selectedAttribute, addData, 'selcedsfd');
+
   const dispatch = useDispatch();
   const addedItem = useSelector(state => state);
-  console.log(addedItem, 'addeditem');
+  // console.log(addedItem?.length, 'addeditem');
 
   const addItem = item => {
-    // console.log(item, 'item');
-
-    dispatch(addProduct(item));
+    if (selectedAttribute) {
+      addToCart(item);
+    } else {
+      showMessage({
+        message: 'Please select an attribute',
+        type: 'danger',
+      });
+    }
   };
 
   const handleScroll = event => {
@@ -134,20 +183,142 @@ const ProductDetails = ({route, navigation}) => {
         </View>
       </View>
       <View style={{flex: 1, gap: 10, marginVertical: 20}}>
-        <View>
-          <Text
+        <View style={{gap: 5}}>
+          {/* Here i have to make a select to select attributes */}
+          <View style={{marginVertical: 10}}>
+            <Text style={{color: Color.white, fontWeight: 'bold'}}>
+              Select Attribute:
+            </Text>
+            <Pressable
+              onPress={() => setIsDropdownOpen(!isDropdownOpen)}
+              style={[
+                styles.dropdown,
+                isDropdownOpen ? styles.dropdownOpen : styles.dropdownClosed,
+              ]}>
+              <Text style={{color: Color.black}}>
+                {selectedAttribute
+                  ? attributes.find(attr => attr.value === selectedAttribute)
+                      ?.label
+                  : 'Select an attribute'}
+              </Text>
+            </Pressable>
+            {isDropdownOpen && (
+              <View style={styles.dropdownList}>
+                <ScrollView>
+                  {attributes &&
+                    attributes.map(attr => (
+                      <TouchableOpacity
+                        key={attr.value}
+                        onPress={() => {
+                          setSelectedAttribute(attr.value);
+                          setIsDropdownOpen(false);
+                        }}
+                        style={styles.dropdownItem}>
+                        <Text style={{color: Color.black}}>{attr.label}</Text>
+                      </TouchableOpacity>
+                    ))}
+                </ScrollView>
+              </View>
+            )}
+          </View>
+
+          {/* Here i have to make a select to select attributes */}
+
+          <View
             style={{
-              fontWeight: 'bold',
-              fontSize: 28,
-              textTransform: 'capitalize',
-              color: Color.grey,
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginVertical: 10,
             }}>
-            {item?.product_name}
-          </Text>
-          <Text style={{fontWeight: 'bold', color: Color.grey}}>
-            Quantity: {item?.quantity}
-          </Text>
-          <Text style={{fontWeight: 'bold', color: Color.grey}}>
+            <View>
+              <Text
+                style={{
+                  fontWeight: 'bold',
+                  fontSize: 28,
+                  textTransform: 'capitalize',
+                  color: Color.white,
+                }}>
+                {item?.product_name}
+              </Text>
+              <Text
+                style={{
+                  fontSize: 14,
+                  fontWeight: 'bold',
+                  color: Color.white,
+                }}>
+                {item?.product_type}
+              </Text>
+            </View>
+            <View
+              style={{flexDirection: 'row', gap: 4, alignItems: 'flex-end'}}>
+              <Text
+                style={{
+                  fontSize: 24,
+                  fontWeight: 'bold',
+                  color: Color.white,
+                }}>
+                ₹{' '}
+                {item?.default_price -
+                  (item?.default_price * item?.discount) / 100}
+              </Text>
+              <Text
+                style={{
+                  textDecorationLine: 'line-through',
+                  fontSize: 12,
+                  color: Color.grey,
+                }}>
+                ₹ {item?.default_price}
+              </Text>
+              <Text
+                style={{
+                  fontSize: 12,
+                  color: Color.grey,
+                }}>
+                ({item?.discount}% Off)
+              </Text>
+            </View>
+          </View>
+          <View style={{flexDirection: 'row', gap: 5}}>
+            {/* <Text style={{fontWeight: 'bold', color: Color.white}}>
+              Quantity:
+            </Text>
+            <Text style={{fontWeight: 'bold', color: Color.grey}}>
+              {item?.quantity}
+            </Text> */}
+            <AirbnbRating
+              defaultRating={item?.rating}
+              count={5}
+              size={20}
+              showRating={false}
+              isDisabled={true}
+            />
+          </View>
+          <View style={{flexDirection: 'row', gap: 5}}>
+            <Text style={{fontWeight: 'bold', color: Color.white}}>
+              Net Quantity:
+            </Text>
+            <Text style={{fontWeight: 'bold', color: Color.grey}}>
+              {item?.quantity}
+            </Text>
+          </View>
+          <View style={{flexDirection: 'row', gap: 5}}>
+            <Text style={{fontWeight: 'bold', color: Color.white}}>
+              warranty:
+            </Text>
+            <Text style={{fontWeight: 'bold', color: Color.grey}}>
+              {item?.warranty}
+            </Text>
+          </View>
+          {/* <View style={{flexDirection: 'row', gap: 5}}>
+            <Text style={{fontWeight: 'bold', color: Color.white}}>
+              warranty:
+            </Text>
+            <Text style={{fontWeight: 'bold', color: Color.grey}}>
+              {item?.warranty}
+            </Text>
+          </View> */}
+          <Text style={{fontWeight: 'bold', color: Color.white}}>
             Description:{' '}
           </Text>
           <RenderHTML
@@ -160,12 +331,28 @@ const ProductDetails = ({route, navigation}) => {
               </p>`,
             }}
           />
-        </View>
-        <View>
-          <Text style={{fontWeight: 'bold', color: Color.grey}}>
-            Specification:
+          <Text style={{fontWeight: 'bold', color: Color.white}}>
+            Exchange Policy:{' '}
           </Text>
-          {/* Add specification details here */}
+          <Text style={{fontWeight: 'bold', color: Color.grey}}>
+            {item?.exchange_policy}
+          </Text>
+          <Text style={{fontWeight: 'bold', color: Color.white}}>
+            Cancellation Policy:{' '}
+          </Text>
+          <Text style={{fontWeight: 'bold', color: Color.grey}}>
+            {item?.cancellation_policy}
+          </Text>
+          {/* <RenderHTML
+            contentWidth={SCREEN_WIDTH}
+            source={{
+              html: `<p style="color: ${Color.grey}">
+                <span style="">
+                  ${item?.product_desc}
+                </span>
+              </p>`,
+            }}
+          /> */}
         </View>
       </View>
     </View>
@@ -181,7 +368,7 @@ const ProductDetails = ({route, navigation}) => {
           alignItems: 'center',
           justifyContent: 'center',
         }}>
-        <Cmnhdr2 backIcon title="Product Details" />
+        <Cmnhdr2 backIcon cart title="Product Details" />
         <View style={styles.detailContainer}>
           <View style={styles.innerContainer}>
             {loading ? (
@@ -225,6 +412,33 @@ const ProductDetails = ({route, navigation}) => {
 export default ProductDetails;
 
 const styles = StyleSheet.create({
+  // Custom dropdown styles
+  dropdown: {
+    padding: 10,
+    backgroundColor: Color.white,
+    borderColor: Color.black,
+    borderWidth: 1,
+    borderRadius: 5,
+  },
+  dropdownOpen: {
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+  },
+  dropdownClosed: {},
+  dropdownList: {
+    backgroundColor: Color.white,
+    borderColor: Color.black,
+    borderWidth: 1,
+    borderTopWidth: 0,
+    borderBottomLeftRadius: 5,
+    borderBottomRightRadius: 5,
+    maxHeight: 150,
+  },
+  dropdownItem: {
+    padding: 10,
+    borderBottomColor: Color.grey,
+    borderBottomWidth: 1,
+  },
   detailContainer: {
     margin: 10,
     flex: 1,

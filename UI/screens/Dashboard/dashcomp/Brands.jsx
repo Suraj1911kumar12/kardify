@@ -6,14 +6,18 @@ import {
   StyleSheet,
   Dimensions,
   Alert,
+  TouchableOpacity,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import axios from 'axios';
 import {apis} from '../../../utils/api';
 import {Color} from '../../../styles/Color';
+import {useNavigation} from '@react-navigation/native';
+import ScreenNames from '../../../constants/Screens';
 
 const width = Dimensions.get('screen').width;
 const Brands = () => {
+  const navigation = useNavigation();
   const brandApi = apis.baseUrl + apis.brands;
 
   const [brands, setBrands] = useState([]);
@@ -35,14 +39,6 @@ const Brands = () => {
 
   // console.log(brands);
 
-  const arr = [
-    {id: 1, name: 'Exterior'},
-    {id: 1, name: 'Interior'},
-    {id: 1, name: 'AUDIO/VIDEO'},
-    {id: 1, name: 'LIGHTS'},
-    {id: 1, name: 'CAR CARE'},
-    {id: 1, name: 'INSTALLATION'},
-  ];
   return (
     <View style={styles.BrandMainView}>
       <Text
@@ -63,7 +59,15 @@ const Brands = () => {
         {brands &&
           brands?.map((ele, i) => {
             return (
-              <View key={i} style={styles.subBrandView}>
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate(
+                    ScreenNames.productsList,
+                    `brand_id=${ele?.id}`,
+                  )
+                }
+                key={i}
+                style={styles.subBrandView}>
                 <View style={styles.innerShow}>
                   <View
                     style={{
@@ -86,7 +90,7 @@ const Brands = () => {
                     {ele?.brand_name}
                   </Text>
                 </View>
-              </View>
+              </TouchableOpacity>
             );
           })}
       </ScrollView>
