@@ -1,9 +1,20 @@
 import React from 'react';
-import {View, Text, StyleSheet, ScrollView} from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Dimensions,
+  SafeAreaView,
+} from 'react-native';
+import {Color} from '../styles/Color';
 
-const OrderStatusLine = ({status}) => {
-  const statuses = ['Ordered', 'Shipped', 'Out for Delivery', 'Delivered'];
+const SCREEN_WIDTH = Dimensions.get('window').width;
 
+const OrderStatusLine = ({
+  status,
+  statuses = ['Cart', 'Address', 'Payment'],
+}) => {
   const getStatusIndex = status => {
     return statuses.indexOf(status);
   };
@@ -11,11 +22,21 @@ const OrderStatusLine = ({status}) => {
   const currentIndex = getStatusIndex(status);
 
   return (
-    <ScrollView horizontal>
+    <SafeAreaView>
       <View style={styles.container}>
         {statuses.map((item, index) => (
           <React.Fragment key={index}>
             <View style={styles.statusItem}>
+              {index < statuses.length && (
+                <View
+                  style={[
+                    styles.line,
+                    currentIndex >= index
+                      ? styles.completedLine
+                      : styles.pendingLine,
+                  ]}
+                />
+              )}
               <View
                 style={[
                   styles.circle,
@@ -25,33 +46,30 @@ const OrderStatusLine = ({status}) => {
               </View>
               <Text style={styles.statusText}>{item}</Text>
             </View>
-            {index < statuses.length - 1 && (
-              <View
-                style={[
-                  styles.line,
-                  currentIndex >= index + 1
-                    ? styles.completedLine
-                    : styles.pendingLine,
-                ]}
-              />
-            )}
           </React.Fragment>
         ))}
       </View>
-    </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    width: SCREEN_WIDTH,
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
     paddingVertical: 20,
-    position: 'relative',
+    alignItems: 'center',
+    gap: 5,
+    width: SCREEN_WIDTH,
+    // paddingHorizontal: 10, // Added padding for better spacing
   },
   statusItem: {
+    // flex: 1,
+    // width: 50,
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 2,
+    // borderWidth:2
   },
   circle: {
     width: 24,
@@ -61,12 +79,12 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'transparent', // To cover the line underneath
+    backgroundColor: 'transparent',
   },
   innerCircle: {
     width: 16,
     height: 16,
-    borderRadius: 10,
+    borderRadius: 8,
     backgroundColor: '#4CAF50',
   },
   active: {
@@ -76,15 +94,16 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
   },
   statusText: {
-    marginTop: 8,
+    // marginTop: 8,
     fontSize: 12,
     textAlign: 'center',
-    width: 70, // Adjust width for better text alignment
+    width: 'auto',
+    color: Color.white,
   },
   line: {
     width: 50,
-    height: 2,
-    marginTop: -13, // Adjust margin to align with the circle
+    height: 5,
+    // marginTop: -13,
     zIndex: -1,
   },
   completedLine: {

@@ -16,9 +16,13 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import Cmnhdr from '../../component/Cmnhdr';
 import {UseAuth} from '../../context/AuthContext';
 import {Color} from '../../styles/Color';
+import {useSelector} from 'react-redux';
 
 const More = props => {
   const auth = UseAuth();
+
+  const userDetail = useSelector(state => state.profile);
+
   const arr = [
     {
       id: 1,
@@ -57,7 +61,7 @@ const More = props => {
       onPress: () => props.navigation.navigate(ScreenNames.returnpolicy),
     },
     {
-      id: 5,
+      id: 20,
       name: 'Refund Policy',
       icon: 'all-inbox',
       onPress: () => props.navigation.navigate(ScreenNames.refundPolicy),
@@ -73,29 +77,25 @@ const More = props => {
       name: 'Feedback',
       icon: 'all-inbox',
       onPress: () => props.navigation.navigate(ScreenNames.feedback),
-
     },
     {
       id: 8,
       name: 'Purchase Gift card',
       icon: 'all-inbox',
       onPress: () => props.navigation.navigate(ScreenNames.purchaseGiftCard),
-
     },
-   
+
     {
       id: 10,
       name: 'Customer Support',
       icon: 'all-inbox',
       onPress: () => props.navigation.navigate(ScreenNames.customerSupport),
-
     },
     {
       id: 11,
       name: 'Rewards',
       icon: 'all-inbox',
       onPress: () => props.navigation.navigate(ScreenNames.reward),
-
     },
     {
       id: 12,
@@ -128,14 +128,27 @@ const More = props => {
                 justifyContent: 'center',
                 alignItems: 'center',
               }}>
-              <Image
-                source={require('../../../assets/images/profile/profileimg.png')}
-              />
-              <View>
+              {userDetail?.profile_img?.length > 0 ? (
+                <Image
+                  source={{uri: apis.baseImgUrl + userDetail?.profile_img}}
+                />
+              ) : (
+                <Image
+                  source={require('../../../assets/images/profile/profileimg.png')}
+                />
+              )}
+              <View
+                style={{flexDirection: 'row', alignItems: 'center', gap: 5}}>
                 <Text
                   style={{color: '#FFFFFF', fontSize: 18, fontWeight: '800'}}>
-                  Suraj
+                  {userDetail?.fullname || 'N/A'}
                 </Text>
+                <TouchableOpacity>
+                  <Icon
+                    name="edit-square"
+                    style={{fontSize: 15, color: Color.white}}
+                  />
+                </TouchableOpacity>
               </View>
             </View>
             {arr.map((elem, index) => (

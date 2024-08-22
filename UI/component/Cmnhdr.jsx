@@ -1,15 +1,30 @@
-import React from 'react';
-import {View, StyleSheet, Image, TouchableOpacity, Text} from 'react-native';
+import React, {useState} from 'react';
+import {View, StyleSheet, Text, TouchableOpacity} from 'react-native';
 import {UseAuth} from '../context/AuthContext';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import MiIcon from 'react-native-vector-icons/MaterialIcons';
-
 import EnIcon from 'react-native-vector-icons/Entypo';
 import {Color} from '../styles/Color';
+import {useSelector} from 'react-redux';
+import AddressModal from './AddressModal'; // Import the AddressModal component
 
 const Cmnhdr = props => {
   const {backIcon, title} = props;
   const auth = UseAuth();
+  const userDetail = useSelector(state => state.profile);
+  const userAddress = useSelector(state => state.address);
+
+  const [modalVisible, setModalVisible] = useState(false); // State to control modal visibility
+
+  const handleAddressPress = () => {
+    setModalVisible(true);
+  };
+
+  const handleSelectAddress = (selectedAddress) => {
+    // Handle the logic to update the selected address
+    setModalVisible(false);
+    // Optionally, dispatch an action to update the selected address in the store
+  };
 
   return (
     <View style={styles.header}>
@@ -17,25 +32,29 @@ const Cmnhdr = props => {
         <View style={styles.firstView}>
           <View style={{gap: 2, color: Color.white}}>
             <Text style={{fontSize: 18, color: Color.white}}>
-              Welcome Suraj
+              Welcome {userDetail?.fullname}
             </Text>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 3,
-              }}>
-              <EnIcon
-                name="location-pin"
-                style={{fontSize: 15, color: Color.white}}
-              />
-              <Text style={{color: Color.white}}>Kormangala ,Bangalore</Text>
-              <MiIcon
-                name="arrow-drop-down"
-                style={{fontSize: 15, color: Color.white}}
-              />
-            </View>
+            <TouchableOpacity onPress={handleAddressPress}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 3,
+                }}>
+                <EnIcon
+                  name="location-pin"
+                  style={{fontSize: 15, color: Color.white}}
+                />
+                <Text style={{color: Color.white}}>
+                  {userAddress[0]?.city + ' ' + userAddress[0]?.state}
+                </Text>
+                <MiIcon
+                  name="arrow-drop-down"
+                  style={{fontSize: 15, color: Color.white}}
+                />
+              </View>
+            </TouchableOpacity>
           </View>
         </View>
       ) : (
@@ -67,11 +86,21 @@ const Cmnhdr = props => {
           />
         </TouchableOpacity>
       </View>
+
+      <AddressModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        addresses={userAddress}
+        onSelectAddress={handleSelectAddress}
+      />
     </View>
   );
 };
 
 export default Cmnhdr;
+
+// Styles remain the same as before
+
 
 const styles = StyleSheet.create({
   header: {

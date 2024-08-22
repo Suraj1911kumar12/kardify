@@ -14,6 +14,7 @@ import MiIcon from 'react-native-vector-icons/MaterialIcons';
 import {useNavigation} from '@react-navigation/native';
 import {Color} from '../styles/Color';
 import {useSelector} from 'react-redux';
+import ScreenNames from '../constants/Screens';
 
 const Cmnhdr2 = props => {
   const navigation = useNavigation();
@@ -21,9 +22,9 @@ const Cmnhdr2 = props => {
   const auth = UseAuth();
 
   const items = useSelector(state => state);
-  // console.log(items.item, 'items');
+  // console.log(items?.item, 'items');
 
-  const addedLength = items.item.length;
+  const addedLength = items?.item?.length;
 
   return (
     <View style={styles.header}>
@@ -53,7 +54,7 @@ const Cmnhdr2 = props => {
       <View style={styles.thirdView}>
         {cart ? (
           <TouchableOpacity
-            // onPress={props.notification}
+            onPress={() => navigation.navigate(ScreenNames.carts)}
             style={styles.circleView}>
             <Icon name="cart" style={{fontSize: 20, color: Color.grey}} />
             <View

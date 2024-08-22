@@ -19,10 +19,14 @@ import Icon from 'react-native-vector-icons/AntDesign';
 import OrderStatusLine from '../../component/OrderSts';
 import {useNavigation} from '@react-navigation/native';
 import ScreenNames from '../../constants/Screens';
-import {useSelector} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
+import {removeProduct} from '../../redux/slice/cartSlice';
 
 const Carts = () => {
-  const addedCartData = useSelector(state => state);
+  const addedData = useSelector(state => state);
+  const dispatch = useDispatch();
+  const address = addedData?.address;
+  // console.log(address,'address');
 
   const navigation = useNavigation();
 
@@ -42,10 +46,9 @@ const Carts = () => {
   }, []);
 
   useEffect(() => {
-    // getDataCart();
-    setCartData(addedCartData.item);
-    // console.log(cartData, 'cartdata');
-  }, []);
+    getDataCart();
+    setCartData(addedData.item);
+  }, [addedData.item, dispatch]);
 
   const dummyData = [
     {
@@ -76,8 +79,9 @@ const Carts = () => {
 
   const renderItem = ({item}) => (
     <View style={styles.itemContainer}>
-      {console.log(item?.default_price,'itemgfahhgvjghjgjgjjh')}
-      <TouchableOpacity style={{position: 'absolute', top: 5, right: 5}}>
+      <TouchableOpacity
+        onPress={() => dispatch(removeProduct(item))}
+        style={{position: 'absolute', top: 5, right: 5}}>
         <Icon name="close" size={20} color={Color.white} />
       </TouchableOpacity>
 
@@ -86,7 +90,6 @@ const Carts = () => {
           source={{uri: apis.baseImgUrl + item?.images[0]?.image_url}}
           style={styles.itemImage}
           resizeMode="cover"
-
         />
       </View>
       <View style={styles.itemTitleContainer}>
@@ -170,16 +173,27 @@ const Carts = () => {
         style={{height: '100%', width: '100%'}}>
         <Cmnhdr2 backIcon title="Cart" />
         <ScrollView style={{paddingBottom: 10, marginBottom: 60}}>
-          <OrderStatusLine status="Out for Delivery" />
-          {/* <View style={styles.cardContainer}> */}
-          <View style={styles.address}>
-            <Text style={styles.addressText}>
-              Deliver to : Shivani Patil, 585102 Plot no 92 corporation layout
-            </Text>
-            <TouchableOpacity style={styles.addressChange}>
-              <Text style={styles.addressTextChange}>Change</Text>
-            </TouchableOpacity>
-          </View>
+          <OrderStatusLine status="Address" />
+          {address ? (
+            <View style={styles.address}>
+              <Text style={styles.addressText}>
+                Deliver to :
+                {`${address[0]?.area},${address[0]?.city},${address[0]?.landmark},${address[0]?.state},`}
+              </Text>
+              <TouchableOpacity style={styles.addressChange}>
+                <Text style={styles.addressTextChange}>Change</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.address}>
+              <Text style={styles.addressText}>
+                Deliver to : Shivani Patil, 585102 Plot no 92 corporation layout
+              </Text>
+              <TouchableOpacity style={styles.addressChange}>
+                <Text style={styles.addressTextChange}>Change</Text>
+              </TouchableOpacity>
+            </View>
+          )}
           <FlatList
             data={cartData}
             renderItem={renderItem}

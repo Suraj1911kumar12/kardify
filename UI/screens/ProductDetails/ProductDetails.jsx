@@ -70,7 +70,7 @@ const ProductDetails = ({route, navigation}) => {
               },
             }),
           );
-        setAttributes(attributeOptions || []);
+        setAttributes(attributeOptions);
       }
     } catch (error) {
       console.error(error);
@@ -79,31 +79,13 @@ const ProductDetails = ({route, navigation}) => {
     }
   }, []);
 
-  const addToCart = async item => {
+  const addToCart = item => {
     try {
-      const resp = await axios.post(
-        '/add-to-cart',
-        {
-          product_id: addData.id,
-          combination_id: selectedAttribute?.id,
-          quantity: addData.quantity,
-        },
-        {
-          headers: auth.token,
-        },
-      );
-      if (resp.data.code === 200) {
-        // console.log(resp);
-        dispatch(addProduct(item));
-
-        console.log('Product added to cart successfully');
-        showMessage({
-          message: 'Product added to cart',
-          type: 'success',
-        });
-      } else {
-        console.log('Error adding product to cart');
-      }
+      dispatch(addProduct(item));
+      showMessage({
+        message: 'Product added to cart',
+        type: 'success',
+      });
     } catch (error) {
       console.error(error.respons.data.message, 'error');
     }
@@ -112,12 +94,40 @@ const ProductDetails = ({route, navigation}) => {
   useEffect(() => {
     getProductDetails();
   }, []);
+  // / console.log(selectedAttribute, 'new');
+  // const resp = await axios.post(
+  //   '/add-to-cart',
+  //   {
+  //     product_id: addData.id,
+  //     combination_id: selectedAttribute?.id,
+  //     quantity: addData.quantity,
+  //   },
+  //   {
+  //     headers: {
+  //       Authorization: auth.token,
+  //     },
+  //   },
+  // );
 
-  console.log(selectedAttribute, addData, 'selcedsfd');
+  // if (resp.data.code === 200) {
+  //   console.log('Product added to cart successfully');
+  //   showMessage({
+  //     message: 'Product added to cart',
+  //     type: 'success',
+  //   });
+  // } else {
+  //   // console.log('Error adding product to cart');
+  //   showMessage({
+  //     message: resp.data.message || 'Error adding product to cart',
+  //     type: 'danger',
+  //   });
+  // }
+
+  // console.log(selectedAttribute, addData, 'selcedsfd');
 
   const dispatch = useDispatch();
   const addedItem = useSelector(state => state);
-  // console.log(addedItem?.length, 'addeditem');
+  console.log(addedItem?.item, 'addeditem');
 
   const addItem = item => {
     if (selectedAttribute) {
@@ -145,172 +155,307 @@ const ProductDetails = ({route, navigation}) => {
     </View>
   );
 
-  const renderItemDetails = ({item}) => (
-    <View style={{flex: 1, minHeight: SCREEN_HEIGHT, padding: 10}}>
-      <View style={{height: 200}}>
-        <FlatList
-          data={item?.images}
-          horizontal
-          pagingEnabled
-          showsVerticalScrollIndicator={false}
-          showsHorizontalScrollIndicator={false}
-          keyExtractor={image => image.id.toString()}
-          renderItem={({item: image}) => (
-            <Image
-              style={{
-                width: width - 40,
-                height: 200,
-                borderTopLeftRadius: 10,
-                borderTopRightRadius: 10,
-                borderWidth: 2,
-              }}
-              source={{uri: apis.baseImgUrl + image.image_url}}
+  const renderItemDetails = ({item}) => {
+    const getDynamicFontSize = textLength => {
+      if (textLength > 50) return 22; // Adjust this threshold and size as needed
+      if (textLength > 15) return 24;
+      return 28;
+    };
+    const isNameTooLong = item?.product_name.length > 20;
+
+    return (
+      <>
+        <View style={{flex: 1, minHeight: SCREEN_HEIGHT, padding: 10}}>
+          <View style={{height: 200}}>
+            <FlatList
+              data={item?.images}
+              horizontal
+              pagingEnabled
+              showsVerticalScrollIndicator={false}
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={image => image.id.toString()}
+              renderItem={({item: image}) => (
+                <Image
+                  style={{
+                    width: width - 40,
+                    height: 200,
+                    borderTopLeftRadius: 10,
+                    borderTopRightRadius: 10,
+                    borderWidth: 2,
+                  }}
+                  source={{uri: apis.baseImgUrl + image.image_url}}
+                />
+              )}
+              onScroll={handleScroll} // Track the scroll event
+              ref={flatListRef} // Attach the reference
             />
-          )}
-          onScroll={handleScroll} // Track the scroll event
-          ref={flatListRef} // Attach the reference
-        />
-        <View style={styles.dotContainer}>
-          {item?.images?.map((_, i) => (
-            <View
-              key={i}
-              style={[
-                styles.dot,
-                i === imageIndex ? styles.activeDot : styles.inactiveDot,
-              ]}
-            />
-          ))}
-        </View>
-      </View>
-      <View style={{flex: 1, gap: 10, marginVertical: 20}}>
-        <View style={{gap: 5}}>
-          {/* Here i have to make a select to select attributes */}
-          <View style={{marginVertical: 10}}>
-            <Text style={{color: Color.white, fontWeight: 'bold'}}>
-              Select Attribute:
-            </Text>
-            <Pressable
-              onPress={() => setIsDropdownOpen(!isDropdownOpen)}
-              style={[
-                styles.dropdown,
-                isDropdownOpen ? styles.dropdownOpen : styles.dropdownClosed,
-              ]}>
-              <Text style={{color: Color.black}}>
-                {selectedAttribute
-                  ? attributes.find(attr => attr.value === selectedAttribute)
-                      ?.label
-                  : 'Select an attribute'}
-              </Text>
-            </Pressable>
-            {isDropdownOpen && (
-              <View style={styles.dropdownList}>
-                <ScrollView>
-                  {attributes &&
-                    attributes.map(attr => (
-                      <TouchableOpacity
-                        key={attr.value}
-                        onPress={() => {
-                          setSelectedAttribute(attr.value);
-                          setIsDropdownOpen(false);
-                        }}
-                        style={styles.dropdownItem}>
-                        <Text style={{color: Color.black}}>{attr.label}</Text>
-                      </TouchableOpacity>
-                    ))}
-                </ScrollView>
+            <View style={styles.dotContainer}>
+              {item?.images?.map((_, i) => (
+                <View
+                  key={i}
+                  style={[
+                    styles.dot,
+                    i === imageIndex ? styles.activeDot : styles.inactiveDot,
+                  ]}
+                />
+              ))}
+            </View>
+          </View>
+          <View style={{flex: 1, gap: 10, marginVertical: 20}}>
+            <View style={{gap: 5}}>
+              {/* Here i have to make a select to select attributes */}
+              {attributes.length > 0 && (
+                <View style={{marginVertical: 10}}>
+                  <Text style={{color: Color.white, fontWeight: 'bold'}}>
+                    Select Attribute:
+                  </Text>
+                  <Pressable
+                    onPress={() => setIsDropdownOpen(!isDropdownOpen)}
+                    style={[
+                      styles.dropdown,
+                      isDropdownOpen
+                        ? styles.dropdownOpen
+                        : styles.dropdownClosed,
+                    ]}>
+                    <Text style={{color: Color.black}}>
+                      {selectedAttribute
+                        ? attributes.find(
+                            attr => attr.value === selectedAttribute,
+                          )?.label
+                        : 'Select an attribute'}
+                    </Text>
+                  </Pressable>
+                  {isDropdownOpen && (
+                    <View style={styles.dropdownList}>
+                      <ScrollView>
+                        {attributes &&
+                          attributes.map(attr => (
+                            <TouchableOpacity
+                              key={attr.value}
+                              onPress={() => {
+                                setSelectedAttribute(attr.value);
+                                setIsDropdownOpen(false);
+                              }}
+                              style={styles.dropdownItem}>
+                              <Text style={{color: Color.black}}>
+                                {attr.label}
+                              </Text>
+                            </TouchableOpacity>
+                          ))}
+                      </ScrollView>
+                    </View>
+                  )}
+                </View>
+              )}
+
+              {/* Here i have to make a select to select attributes */}
+
+              {/* <View
+                style={{
+                  width: SCREEN_WIDTH,
+                  // overflow:'scroll',
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginVertical: 10,
+                }}>
+                <View>
+                  <Text
+                    style={{
+                      fontWeight: 'bold',
+                      fontSize: 28,
+                      textTransform: 'capitalize',
+                      color: Color.white,
+                    }}>
+                    {item?.product_name}
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontWeight: 'bold',
+                      color: Color.white,
+                    }}>
+                    {item?.product_type}
+                  </Text>
+                </View>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    gap: 4,
+                    alignItems: 'flex-end',
+                  }}>
+                  <Text
+                    style={{
+                      fontSize: 24,
+                      fontWeight: 'bold',
+                      color: Color.white,
+                    }}>
+                    ₹{' '}
+                    {item?.default_price -
+                      (item?.default_price * item?.discount) / 100}
+                  </Text>
+                  {item?.discount && (
+                    <>
+                      <Text
+                        style={{
+                          textDecorationLine: 'line-through',
+                          fontSize: 12,
+                          color: Color.grey,
+                        }}>
+                        ₹ {item?.default_price}
+                      </Text>
+
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          color: Color.grey,
+                        }}>
+                        ({item?.discount}% Off)
+                      </Text>
+                    </>
+                  )}
+                </View>
+              </View> */}
+
+              <View
+                style={{
+                  width: SCREEN_WIDTH,
+                  flexDirection: 'column', // Change to column to move the price below the name
+                  justifyContent: 'flex-start',
+                  alignItems: 'flex-start',
+                  marginVertical: 10,
+                }}>
+                <View
+                  style={{flexDirection: 'column', alignItems: 'flex-start'}}>
+                  <Text
+                    style={{
+                      fontWeight: 'bold',
+                      fontSize: getDynamicFontSize(item?.product_name.length),
+                      textTransform: 'capitalize',
+                      color: Color.white,
+                    }}>
+                    {item?.product_name}
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontWeight: 'bold',
+                      color: Color.white,
+                    }}>
+                    {item?.product_type}
+                  </Text>
+                  {isNameTooLong && (
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'flex-end',
+                        marginTop: 4,
+                      }}>
+                      <Text
+                        style={{
+                          fontSize: 24,
+                          fontWeight: 'bold',
+                          color: Color.white,
+                        }}>
+                        ₹{' '}
+                        {item?.default_price -
+                          (item?.default_price * item?.discount) / 100}
+                      </Text>
+                      {item?.discount && (
+                        <>
+                          <Text
+                            style={{
+                              textDecorationLine: 'line-through',
+                              fontSize: 12,
+                              color: Color.grey,
+                            }}>
+                            ₹ {item?.default_price}
+                          </Text>
+                          <Text
+                            style={{
+                              fontSize: 12,
+                              color: Color.grey,
+                            }}>
+                            ({item?.discount}% Off)
+                          </Text>
+                        </>
+                      )}
+                    </View>
+                  )}
+                </View>
+
+                {/* If the name is not too long, show the price on the same line */}
+                {!isNameTooLong && (
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'flex-end',
+                      marginTop: 4,
+                    }}>
+                    <Text
+                      style={{
+                        fontSize: 24,
+                        fontWeight: 'bold',
+                        color: Color.white,
+                      }}>
+                      ₹{' '}
+                      {item?.default_price -
+                        (item?.default_price * item?.discount) / 100}
+                    </Text>
+                    {item?.discount && (
+                      <>
+                        <Text
+                          style={{
+                            textDecorationLine: 'line-through',
+                            fontSize: 12,
+                            color: Color.grey,
+                          }}>
+                          ₹ {item?.default_price}
+                        </Text>
+                        <Text
+                          style={{
+                            fontSize: 12,
+                            color: Color.grey,
+                          }}>
+                          ({item?.discount}% Off)
+                        </Text>
+                      </>
+                    )}
+                  </View>
+                )}
               </View>
-            )}
-          </View>
-
-          {/* Here i have to make a select to select attributes */}
-
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginVertical: 10,
-            }}>
-            <View>
-              <Text
-                style={{
-                  fontWeight: 'bold',
-                  fontSize: 28,
-                  textTransform: 'capitalize',
-                  color: Color.white,
-                }}>
-                {item?.product_name}
-              </Text>
-              <Text
-                style={{
-                  fontSize: 14,
-                  fontWeight: 'bold',
-                  color: Color.white,
-                }}>
-                {item?.product_type}
-              </Text>
-            </View>
-            <View
-              style={{flexDirection: 'row', gap: 4, alignItems: 'flex-end'}}>
-              <Text
-                style={{
-                  fontSize: 24,
-                  fontWeight: 'bold',
-                  color: Color.white,
-                }}>
-                ₹{' '}
-                {item?.default_price -
-                  (item?.default_price * item?.discount) / 100}
-              </Text>
-              <Text
-                style={{
-                  textDecorationLine: 'line-through',
-                  fontSize: 12,
-                  color: Color.grey,
-                }}>
-                ₹ {item?.default_price}
-              </Text>
-              <Text
-                style={{
-                  fontSize: 12,
-                  color: Color.grey,
-                }}>
-                ({item?.discount}% Off)
-              </Text>
-            </View>
-          </View>
-          <View style={{flexDirection: 'row', gap: 5}}>
-            {/* <Text style={{fontWeight: 'bold', color: Color.white}}>
+              <View style={{flexDirection: 'row', gap: 5}}>
+                {/* <Text style={{fontWeight: 'bold', color: Color.white}}>
               Quantity:
             </Text>
             <Text style={{fontWeight: 'bold', color: Color.grey}}>
               {item?.quantity}
             </Text> */}
-            <AirbnbRating
-              defaultRating={item?.rating}
-              count={5}
-              size={20}
-              showRating={false}
-              isDisabled={true}
-            />
-          </View>
-          <View style={{flexDirection: 'row', gap: 5}}>
-            <Text style={{fontWeight: 'bold', color: Color.white}}>
-              Net Quantity:
-            </Text>
-            <Text style={{fontWeight: 'bold', color: Color.grey}}>
-              {item?.quantity}
-            </Text>
-          </View>
-          <View style={{flexDirection: 'row', gap: 5}}>
-            <Text style={{fontWeight: 'bold', color: Color.white}}>
-              warranty:
-            </Text>
-            <Text style={{fontWeight: 'bold', color: Color.grey}}>
-              {item?.warranty}
-            </Text>
-          </View>
-          {/* <View style={{flexDirection: 'row', gap: 5}}>
+                <AirbnbRating
+                  defaultRating={item?.rating}
+                  count={5}
+                  size={20}
+                  showRating={false}
+                  isDisabled={true}
+                />
+              </View>
+              <View style={{flexDirection: 'row', gap: 5}}>
+                <Text style={{fontWeight: 'bold', color: Color.white}}>
+                  Net Quantity:
+                </Text>
+                <Text style={{fontWeight: 'bold', color: Color.grey}}>
+                  {item?.quantity}
+                </Text>
+              </View>
+              <View style={{flexDirection: 'row', gap: 5}}>
+                <Text style={{fontWeight: 'bold', color: Color.white}}>
+                  warranty:
+                </Text>
+                <Text style={{fontWeight: 'bold', color: Color.grey}}>
+                  {item?.warranty}
+                </Text>
+              </View>
+              {/* <View style={{flexDirection: 'row', gap: 5}}>
             <Text style={{fontWeight: 'bold', color: Color.white}}>
               warranty:
             </Text>
@@ -318,32 +463,32 @@ const ProductDetails = ({route, navigation}) => {
               {item?.warranty}
             </Text>
           </View> */}
-          <Text style={{fontWeight: 'bold', color: Color.white}}>
-            Description:{' '}
-          </Text>
-          <RenderHTML
-            contentWidth={SCREEN_WIDTH}
-            source={{
-              html: `<p style="color: ${Color.grey}">
+              <Text style={{fontWeight: 'bold', color: Color.white}}>
+                Description:{' '}
+              </Text>
+              <RenderHTML
+                contentWidth={SCREEN_WIDTH}
+                source={{
+                  html: `<p style="color: ${Color.grey}">
                 <span style="">
                   ${item?.product_desc}
                 </span>
               </p>`,
-            }}
-          />
-          <Text style={{fontWeight: 'bold', color: Color.white}}>
-            Exchange Policy:{' '}
-          </Text>
-          <Text style={{fontWeight: 'bold', color: Color.grey}}>
-            {item?.exchange_policy}
-          </Text>
-          <Text style={{fontWeight: 'bold', color: Color.white}}>
-            Cancellation Policy:{' '}
-          </Text>
-          <Text style={{fontWeight: 'bold', color: Color.grey}}>
-            {item?.cancellation_policy}
-          </Text>
-          {/* <RenderHTML
+                }}
+              />
+              <Text style={{fontWeight: 'bold', color: Color.white}}>
+                Exchange Policy:{' '}
+              </Text>
+              <Text style={{fontWeight: 'bold', color: Color.grey}}>
+                {item?.exchange_policy}
+              </Text>
+              <Text style={{fontWeight: 'bold', color: Color.white}}>
+                Cancellation Policy:{' '}
+              </Text>
+              <Text style={{fontWeight: 'bold', color: Color.grey}}>
+                {item?.cancellation_policy}
+              </Text>
+              {/* <RenderHTML
             contentWidth={SCREEN_WIDTH}
             source={{
               html: `<p style="color: ${Color.grey}">
@@ -353,10 +498,12 @@ const ProductDetails = ({route, navigation}) => {
               </p>`,
             }}
           /> */}
+            </View>
+          </View>
         </View>
-      </View>
-    </View>
-  );
+      </>
+    );
+  };
 
   return (
     <SafeAreaView style={{flex: 1}}>
@@ -393,7 +540,10 @@ const ProductDetails = ({route, navigation}) => {
             paddingHorizontal: 10,
           }}>
           <TouchableOpacity
-            onPress={() => addItem(productDetail[0])} // Correctly passing the item
+            onPress={() => {
+              addItem(productDetail[0]);
+              // addToCart()
+            }} // Correctly passing the item
             style={[
               styles.button,
               {backgroundColor: 'transparent', borderColor: Color.yellow},

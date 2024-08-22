@@ -12,7 +12,6 @@ export const AuthContext = createContext();
 export const AuthProvider = ({children}) => {
   const navigation = useNavigation();
 
-
   // -------------------------- Api's Url's Calling ------------------------
   const loginAPI = apis.baseUrl + apis.login;
   const signUpApi = apis.baseUrl + apis.register;
@@ -25,17 +24,9 @@ export const AuthProvider = ({children}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [otpIdSignUp, setOtpIdSignUp] = useState(null);
 
-  // ------------------------------Api Calling -----------------
+  // ------------------------------Api Calling -------------------------------------------------------
 
-  // const checkToken = async () => {
-  //   const isToken = await AsyncStorage.getItem('token');
-  //   // console.warn('nice 1', isToken);
-  //   setToken(isToken);
-  //   if (token) {
-  //     setIsAuthenticated(true);
-  //   }
-  // };
-
+  // -----------------------------------Cheking Token -----------------------------
   const checkToken = async () => {
     const storedToken = await AsyncStorage.getItem('token');
     setToken(storedToken);
@@ -60,18 +51,32 @@ export const AuthProvider = ({children}) => {
         username: username,
         password: password,
       });
-      if (response.status === 200) {
-        setIsLoading(false);
+      console.log(response.data.code, 'res');
 
-        AsyncStorage.setItem('token', `${response?.data?.token}`);
-        showMessage({
-          message: response?.data?.message || 'Login Successfull ',
-          type: 'success',
-        });
-        checkToken();
+      if (response.status === 200) {
+        if (response.data.code === 200) {
+          setIsLoading(false);
+          AsyncStorage.setItem('token', `${response?.data?.token}`);
+          showMessage({
+            message: response?.data?.message || 'Login Successfull ',
+            type: 'success',
+          });
+          checkToken();
+        } else if (response.data.code === 400) {
+          setIsLoading(false);
+          showMessage({
+            message: response?.data?.message || 'Invalid Credentials',
+            type: 'danger',
+          });
+        } else {
+          setIsLoading(false);
+          showMessage({
+            message: response?.data?.message || 'Server Error',
+            type: 'danger',
+          });
+        }
       } else {
         setIsLoading(false);
-        AsyncStorage.setItem('token', null);
         showMessage({
           message: response?.data?.message || 'Login Failed ',
           type: 'danger',
@@ -80,7 +85,7 @@ export const AuthProvider = ({children}) => {
     } catch (error) {
       setIsLoading(false);
       showMessage({
-        message: error.message || 'Login Failed ',
+        message: error.response?.data?.message || 'Login Failed ',
         type: 'danger',
       });
     }

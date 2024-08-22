@@ -8,7 +8,7 @@ import {
   Image,
   ScrollView,
 } from 'react-native';
-import React from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {UseAuth} from '../../context/AuthContext';
 import Catalogue from './dashcomp/Catologue';
 import TopSellingCategories from './dashcomp/TopSellingComp';
@@ -21,10 +21,59 @@ import FullSearchBar from '../../component/FullSearchBar';
 import Cmnhdr from '../../component/Cmnhdr';
 import ScreenNames from '../../constants/Screens';
 import {useNavigation} from '@react-navigation/native';
-import CustomButton from '../../component/CustomButton';
+// import CustomButton from '../../component/CustomButton';
+import axios from '../../../axios';
+import {useDispatch, useSelector} from 'react-redux';
+import {addProfile} from '../../redux/slice/profileSlice';
+import { addAddress } from '../../redux/slice/addresSlice';
 
 const MainHome = props => {
   const auth = UseAuth();
+  const dispatch = useDispatch();
+  const selector = useSelector(state => state);
+
+  // *********************************State's Call **********************************
+  const [isLoading, setIsLoading] = useState(false);
+  const [isuser, setIsuser] = useState(false);
+  const [userDetail, setUserDetail] = useState(null);
+  const [userAddress, setUserAddress] = useState([]);
+
+  const getUserDetail = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const user = await axios.get('/fetch-customer-details', {
+        headers: {
+          Authorization: auth.token,
+        },
+      });
+      if (user.data.code === 200) {
+        const customerData = user.data.customer_data.customer;
+        const customerAddresses = user.data.customer_data.customer_addresses;
+  
+        setIsuser(true);
+        setUserDetail(customerData);
+        setUserAddress(customerAddresses);
+  
+        dispatch(addProfile(customerData)); // Directly dispatch the fetched customer data
+        dispatch(addAddress(customerAddresses))
+      } else if (user.data.code === 401) {
+        setIsuser(false);
+        setUserDetail(null);
+        auth.handleLogout();
+      } else {
+        setIsuser(false);
+        setUserDetail(null);
+      }
+    } catch (error) {
+      console.log(error, 'error');
+    }
+  }, [auth, dispatch]);
+  
+  useEffect(() => {
+    getUserDetail();
+  }, [getUserDetail]);
+  // console.log(selector, 'proldie');
+
   const navigation = useNavigation();
 
   return (

@@ -15,7 +15,6 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Feather from 'react-native-vector-icons/Feather';
-import {useDispatch} from 'react-redux';
 import {SCREEN_HEIGHT, SCREEN_WIDTH} from '../../../styles/Size';
 import CustomButton from '../../../component/CustomButton';
 import AuthCommonHeader from '../../../component/AuthCommonHeader';
@@ -23,19 +22,25 @@ import ScreenNames from '../../../constants/Screens';
 import {UseAuth} from '../../../context/AuthContext';
 import ContinueWith from '../../../component/ContinueWith';
 import LoginHeader from '../../../component/LoginHeader';
+import {showMessage} from 'react-native-flash-message';
+import {Color} from '../../../styles/Color';
 
 const SignUpOneScreen = props => {
   const auth = UseAuth();
 
   const [showPass, setShowPass] = useState(true);
-  const [firstName, setFirstName] = useState('suraj');
+  const [firstName, setFirstName] = useState('');
 
-  const [lastName, setLastName] = useState('kumar');
-  const [email, setEmail] = useState('isurajkumar.cse@gmail.com');
-  const [password, setPassword] = useState('1234');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const handleRegister = async () => {
     if (firstName == '' && lastName == '' && password == '' && email == '') {
-      Alert.alert('Sign Up Failed', 'Please Fill All Details');
+      // Alert.alert('Sign Up Failed', 'Please Fill All Details');
+      showMessage({
+        message: 'Please Fill All Details',
+        type: 'danger',
+      });
       // props.navigation.navigate('SignUpNumberOtp')
     } else {
       await auth.SignUp(firstName, lastName, email, password);
@@ -66,7 +71,7 @@ const SignUpOneScreen = props => {
             Sign Up
           </Text>
         </View>
-
+        
         <View style={styles.mbleno}>
           <Text style={{color: '#ffffff', fontWeight: '500', fontSize: 13}}>
             Email Id
@@ -194,9 +199,9 @@ const SignUpOneScreen = props => {
         </View>
         <View style={styles.sclmediacmnbdy}>
           <TouchableOpacity
-            onPress={() =>
-              props.navigation.navigate(ScreenNames.ChangePassword)
-            }
+            // onPress={() =>
+            //   props.navigation.navigate(ScreenNames.ChangePassword)
+            // }
             style={styles.googlebdy}>
             <Icon
               name="google"
@@ -208,7 +213,7 @@ const SignUpOneScreen = props => {
           </TouchableOpacity>
         </View>
         <TouchableOpacity
-          onPress={() => props.navigation.navigate(ScreenNames.SignUpDetails)}
+          onPress={() => props.navigation.navigate(ScreenNames.LoginScreen)}
           style={{
             width: SCREEN_WIDTH / 1.1,
             alignSelf: 'center',

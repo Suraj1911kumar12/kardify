@@ -18,8 +18,8 @@ import {showMessage} from 'react-native-flash-message';
 const {width} = Dimensions.get('screen');
 
 const Stories = () => {
-  const arr = [1, 2, 3, 4, 5, 6, 7, 8, 9];
   const [stories, setStories] = useState([]);
+  const arr = [1, 2, 3, 4];
 
   const getStories = useCallback(async () => {
     try {
@@ -34,10 +34,8 @@ const Stories = () => {
         });
       }
     } catch (error) {
-      // console.log(error.response.data.message);
       showMessage({
         message: error.response.data.message || 'Failed to fetch stories',
-        // description: error.response.data.message || 'Failed to fetch stories',
         type: 'danger',
       });
     }
@@ -73,24 +71,28 @@ const Stories = () => {
         resizeMode="stretch"
         style={{height: '100%', width: '100%'}}>
         <ScrollView style={{paddingBottom: 10}}>
-          {/* <View style={styles.cardContainer}> */}
           <Cmnhdr
-            // backIcon
             title="Stories"
             onPress={() => props.navigation.openDrawer()}
             notification={() =>
               props.navigation.navigate(ScreenNames.notification)
             }
           />
-          <FlatList
-            data={stories.length > 0 ? stories : arr}
-            renderItem={renderItem}
-            keyExtractor={item =>
-              item?.id?.toLocaleString() || item?.toLocaleString()
-            }
-            numColumns={2} // Display 2 items per row
-            contentContainerStyle={{padding: 10, gap: 2, marginBottom: 50}}
-          />
+          {stories.length > 0 ? (
+            <FlatList
+              data={stories}
+              renderItem={renderItem}
+              keyExtractor={item =>
+                item?.id?.toLocaleString() || item?.toLocaleString()
+              }
+              numColumns={2} // Display 2 items per row
+              contentContainerStyle={{padding: 10, gap: 2, marginBottom: 50}}
+            />
+          ) : (
+            <View style={styles.noStoriesContainer}>
+              <Text style={styles.noStoriesText}>No stories available</Text>
+            </View>
+          )}
         </ScrollView>
       </ImageBackground>
     </SafeAreaView>
@@ -103,17 +105,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  cardContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
   card: {
     paddingHorizontal: 5,
     paddingVertical: 10,
     flex: 1,
-    width: width / 2,
+    width: width / 2, // Adjusted to leave space between cards
     backgroundColor: Color.lightBlack,
     borderRadius: 20,
     margin: 4,
@@ -125,5 +121,16 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  noStoriesContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 50, // Adjust for spacing
+  },
+  noStoriesText: {
+    color: Color.white,
+    fontSize: 18,
+    textAlign: 'center',
   },
 });
