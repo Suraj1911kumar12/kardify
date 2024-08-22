@@ -21,11 +21,10 @@ import FullSearchBar from '../../component/FullSearchBar';
 import Cmnhdr from '../../component/Cmnhdr';
 import ScreenNames from '../../constants/Screens';
 import {useNavigation} from '@react-navigation/native';
-// import CustomButton from '../../component/CustomButton';
 import axios from '../../../axios';
 import {useDispatch, useSelector} from 'react-redux';
 import {addProfile} from '../../redux/slice/profileSlice';
-import { addAddress } from '../../redux/slice/addresSlice';
+import {addAddress} from '../../redux/slice/addresSlice';
 
 const MainHome = props => {
   const auth = UseAuth();
@@ -49,13 +48,13 @@ const MainHome = props => {
       if (user.data.code === 200) {
         const customerData = user.data.customer_data.customer;
         const customerAddresses = user.data.customer_data.customer_addresses;
-  
+
         setIsuser(true);
         setUserDetail(customerData);
         setUserAddress(customerAddresses);
-  
+
         dispatch(addProfile(customerData)); // Directly dispatch the fetched customer data
-        dispatch(addAddress(customerAddresses))
+        dispatch(addAddress(customerAddresses));
       } else if (user.data.code === 401) {
         setIsuser(false);
         setUserDetail(null);
@@ -68,7 +67,7 @@ const MainHome = props => {
       console.log(error, 'error');
     }
   }, [auth, dispatch]);
-  
+
   useEffect(() => {
     getUserDetail();
   }, [getUserDetail]);
@@ -85,7 +84,7 @@ const MainHome = props => {
         <Cmnhdr
           backIcon
           // title="Home"
-          onPress={() => props.navigation.openDrawer()}
+          // onPress={() => props.navigation.openDrawer()}
           notification={() => navigation.navigate(ScreenNames.notification)}
         />
         <ScrollView>
@@ -188,6 +187,7 @@ const MainHome = props => {
             }}>
             Driving Social Network
           </Text>
+          {/* <CustomButton txtStyle={{}} /> */}
           <ImageBackground
             style={{
               height: 33,
@@ -202,7 +202,6 @@ const MainHome = props => {
               View Stories
             </Text>
           </ImageBackground>
-          {/* <CustomButton title="View Stories" /> */}
           <View style={{marginBottom: 20}}>
             <EngineHeading />
           </View>

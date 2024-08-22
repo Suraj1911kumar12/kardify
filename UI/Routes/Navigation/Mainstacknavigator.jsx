@@ -32,6 +32,7 @@ import ForgotPassword from '../../screens/Auth/ForgotPassword';
 import ForgotPasswordOTP from '../../screens/Auth/ForgotpasswordOTP';
 import ChangePassword from '../../screens/Auth/ChangePassword';
 import SignUpDetails from '../../screens/Auth/SignUp/SignUpDetails';
+import Accessories from '../../screens/Dashboard/Accessories';
 
 const Stack = createNativeStackNavigator();
 
@@ -55,6 +56,10 @@ const Mainstacknavigator = () => {
             <Stack.Screen
               name={ScreenNames.checkout}
               component={CheckoutPage}
+            />
+            <Stack.Screen
+              name={ScreenNames.accessories}
+              component={Accessories}
             />
             <Stack.Screen
               name={ScreenNames.privacypolicy}

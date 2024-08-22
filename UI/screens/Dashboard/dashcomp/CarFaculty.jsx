@@ -7,105 +7,114 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import React, {useCallback, useEffect, useState} from 'react';
-import axios from 'axios';
+import axios from '../../../../axios';
 import {apis} from '../../../utils/api';
 import {useNavigation} from '@react-navigation/native';
 import ScreenNames from '../../../constants/Screens';
-// import {showMessage} from 'react-native-flash-message';
 
 const CarFacility = props => {
   const navigation = useNavigation();
-  const getDataApi = apis.baseUrl + apis.offers;
-
   const [offers, setOffers] = useState([]);
 
   const getOffers = useCallback(async () => {
     try {
-      const res = await axios.get(getDataApi);
+      const res = await axios.get('/get-all-discounts-like-offer');
       if (res?.data?.code === 200) {
-        // showMessage({
-        //   message: 'Success',
-        //   description: 'Data fetched successfully',
-        //   type: 'success',
-        // });
         setOffers(res.data.discounts);
       }
     } catch (error) {
-      console.error('This is error', error.message);
-      // showMessage({
-      //   message: 'Error',
-      //   description: error.message,
-      //   type: 'danger',
-      // });
+      console.error('Error fetching offers:', error.message);
     }
   }, []);
 
   useEffect(() => {
     getOffers();
-  }, []);
+  }, [getOffers]);
+  const arr = [10, 20];
+
+  const renderItem = useCallback(
+    ({item}) => (
+      <TouchableOpacity
+        style={styles.carair}
+        onPress={() => navigation.navigate(ScreenNames.productsList, item?.id)}>
+        <View style={styles.imageContainer}>
+          <Image
+            source={{uri: apis.baseImgUrl + item?.image}}
+            style={styles.offerImage}
+            resizeMode="cover"
+            onError={() => setImgError(true)} // Optionally handle image errors
+          />
+        </View>
+        <Text numberOfLines={1} style={styles.offerText}>
+          {item.discount_name}
+        </Text>
+      </TouchableOpacity>
+    ),
+    [navigation],
+  );
 
   return (
     <View style={styles.carpropertiesbdy}>
-      <FlatList
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        showsVerticalScrollIndicator={false}
-        data={offers}
-        style={{width: '100%', flex: 1}}
-        contentContainerStyle={{gap: 20}}
-        renderItem={({item}) => (
-          <TouchableOpacity
-            style={styles.carair}
-            onPress={() =>
-              navigation.navigate(ScreenNames.productsList, item?.id)
-            }>
-            <View style={{height: 212, width: 180}}>
-              <Image
-                source={{uri: apis.baseImgUrl + item?.image}}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  borderRadius: 5,
-                  objectFit: 'fill',
-                }}
-              />
-            </View>
-            <Text
-              numberOfLines={1}
-              style={{
-                color: '#ffffff',
-                marginTop: 10,
-                marginBottom: 20,
-                textAlign: 'center',
-                fontWeight: '500',
-                fontSize: 13,
-              }}>
-              {item.discount_name}
-            </Text>
-          </TouchableOpacity>
-        )}
-      />
-      {/* <View style={{flex: 1}} /> */}
+      {offers.length > 0 ? (
+        <FlatList
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          data={offers}
+          style={styles.flatList}
+          contentContainerStyle={styles.contentContainer}
+          renderItem={renderItem}
+          keyExtractor={item => item.id.toString()}
+        />
+      ) : (
+        <Text style={styles.noOffersText}>No offers available</Text>
+      )}
     </View>
   );
 };
 
 export default CarFacility;
+
 const styles = StyleSheet.create({
-  linearGradient: {
-    flex: 1,
-  },
   carpropertiesbdy: {
     paddingHorizontal: 10,
     flex: 1,
     width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#17181A',
     flexDirection: 'row',
+    minHeight: 100,
   },
   carair: {
     margin: 2,
-    // marginRight: 50,
+  },
+  imageContainer: {
+    height: 212,
+    width: 180,
+    borderRadius: 5,
+    overflow: 'hidden',
+  },
+  offerImage: {
+    width: '100%',
+    height: '100%',
+  },
+  offerText: {
+    color: '#ffffff',
+    marginTop: 10,
+    marginBottom: 20,
+    textAlign: 'center',
+    fontWeight: '500',
+    fontSize: 13,
+  },
+  flatList: {
+    width: '100%',
+    flex: 1,
+  },
+  contentContainer: {
+    gap: 20,
+  },
+  noOffersText: {
+    color: '#ffffff',
+    fontSize: 16,
+    textAlign: 'center',
   },
 });

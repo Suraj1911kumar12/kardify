@@ -1,106 +1,138 @@
-import { View, Text, Image, ScrollView, StyleSheet, TextInput, StatusBar, TouchableOpacity, ImageBackground, FlatList } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
-import React, { useState } from 'react';
-import { SCREEN_HEIGHT, SCREEN_WIDTH } from '../../../styles/Size';
-//import { SCREEN_HEIGHT, SCREEN_WIDTH } from '../../../../style/Size';
-// import { SCREEN_HEIGHT,SCREEN_WIDTH } from '../../../style/Size';
-const EngineHeading = (props) => {
-    const DATA = [
-        {
-            id: "1",
-            img: require("../../../../assets/images/Dashbaoad/carengine.png"),
-            heading: 'Heading',
-            cmntxt: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry. ',
-            readtxt: 'Read more',
-        },
-        {
-            id: "2",
-            img: require("../../../../assets/images/Dashbaoad/carengine.png"),
-            heading: 'Heading',
-            cmntxt: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry. ',
-            readtxt: 'Read more',
-        },
+import {
+  View,
+  Text,
+  Image,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+  StatusBar,
+} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {SCREEN_HEIGHT, SCREEN_WIDTH} from '../../../styles/Size';
+import axios from '../../../../axios';
+import {apis} from '../../../utils/api';
 
-    ]
+const EngineHeading = props => {
+  const [stories, setStories] = useState([]);
+  const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    const getStories = async () => {
+      try {
+        const response = await axios.get('/fetch-all-stories-customer');
+        if (response.data.code === 200) {
+          setStories(response.data.allStories);
+        } else {
+          showMessage({
+            message: 'Error',
+            description: response.data.message,
+            type: 'danger',
+          });
+        }
+      } catch (error) {
+        showMessage({
+          message: error.response?.data?.message || 'Failed to fetch stories',
+          type: 'danger',
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    return (
-        <FlatList
-            horizontal={true}
-            showsHorizontalScrollIndicator={false}
-            data={DATA}
-            renderItem={({ item }) => {
+    getStories();
+  }, []);
 
-                return (
-
-                    <View style={styles.headingbdy}>
-                        <View style={styles.carenginebdy}>
-                            <Image
-                                source={item.img}
-                                resizeMode="contain"
-                            />
-                        </View>
-                        <View style={styles.cmntxt}>
-                            <Text style={{ color: '#FFFFFF', fontSize: 19, fontWeight: '600', marginBottom: 5 }}>{item.heading}</Text>
-                            <Text style={{ color: '#CAC4C4', fontSize: 12, fontWeight: '500', lineHeight: 16 }}>{item.cmntxt}</Text>
-                        </View>
-                        <View style={styles.readmoretxt}>
-                            <Text style={{ fontSize: 16, color: '#E3BB55', fontWeight: '500' }}>{item.readtxt}</Text>
-                        </View>
-                    </View>
-                )
-
-            }}
-
+  const renderStoryItem = ({item}) => (
+    <View style={styles.headingbdy}>
+      <View style={styles.carenginebdy}>
+        <Image
+          source={{uri: apis.baseImgUrl + item?.image_url}}
+          resizeMode="cover"
+          style={styles.storyImage}
         />
+      </View>
+      <View style={styles.cmntxt}>
+        <Text style={styles.headingText}>{item.heading}</Text>
+        <Text style={styles.descriptionText}>{item.description}</Text>
+      </View>
+      <TouchableOpacity style={styles.readmoretxt}>
+        <Text style={styles.readMoreText}>Read More</Text>
+      </TouchableOpacity>
+    </View>
+  );
 
+  if (loading) {
+    return <Text>Loading...</Text>;
+  }
 
-    );
+  if (!stories.length) {
+    return <Text>No stories available.</Text>;
+  }
+
+  return (
+    <FlatList
+      horizontal={true}
+      showsHorizontalScrollIndicator={false}
+      data={stories}
+      renderItem={renderStoryItem}
+      keyExtractor={item => item.id.toString()}
+    />
+  );
 };
 
 export default EngineHeading;
+
 const styles = StyleSheet.create({
-    linearGradient: {
-        flex: 1,
-    },
-    headingbdy: {
-        height: SCREEN_HEIGHT / 3.7,
-        width: SCREEN_WIDTH / 2,
-        backgroundColor: "#171819",
-        marginTop: 60,
-        alignItems: 'center',
-        marginLeft: 15,
-        borderRadius: 10,
-        elevation: 8,
-        opacity: 5,
-        x: 1,
-        y: 3,
-        //position:'absolute'
-    },
-    carenginebdy: {
-        height: SCREEN_HEIGHT / 5.5,
-        width: SCREEN_WIDTH / 2.25,
-        //backgroundColor:'yellow',
-        position: 'absolute',
-        marginTop: -60,
-        alignItems: 'center'
+  headingbdy: {
+    height: SCREEN_HEIGHT / 3.7,
+    width: SCREEN_WIDTH / 2,
+    backgroundColor: '#171819',
+    marginTop: 60,
+    alignItems: 'center',
+    marginLeft: 15,
+    borderRadius: 10,
+    elevation: 8,
+  },
+  carenginebdy: {
+    height: SCREEN_HEIGHT / 5.5,
+    width: SCREEN_WIDTH / 2.25,
+    position: 'absolute',
+    marginTop: -60,
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  cmntxt: {
+    height: SCREEN_HEIGHT / 9,
+    width: SCREEN_WIDTH / 2.25,
+    marginTop: 80,
+  },
+  readmoretxt: {
+    height: SCREEN_HEIGHT / 30,
+    width: SCREEN_WIDTH / 2.25,
+  },
+  storyImage: {
+    height: '100%',
+    width: '100%',
+    maxWidth: 158,
+    maxHeight: 112,
 
-    },
-    cmntxt: {
-        height: SCREEN_HEIGHT / 9,
-        width: SCREEN_WIDTH / 2.25,
-        //backgroundColor:"cyan",
-        marginTop: 80
-    },
-    readmoretxt: {
-        height: SCREEN_HEIGHT / 30,
-        width: SCREEN_WIDTH / 2.25,
-        //justifyContent:'center',
-        //backgroundColor:"pink"
-    }
-
+    borderRadius: 30,
+  },
+  headingText: {
+    color: '#FFFFFF',
+    fontSize: 19,
+    fontWeight: '600',
+    marginBottom: 5,
+  },
+  descriptionText: {
+    color: '#CAC4C4',
+    fontSize: 12,
+    fontWeight: '500',
+    lineHeight: 16,
+  },
+  readMoreText: {
+    fontSize: 16,
+    color: '#E3BB55',
+    fontWeight: '500',
+  },
 });
-
-
-
-

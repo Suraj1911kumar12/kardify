@@ -22,6 +22,7 @@ const Catalogue = () => {
     try {
       const res = await axios.get(categoryApi);
       setCategory(res.data.categories);
+      console.log(res.data.categories?.length, 'res.data.categories');
     } catch (error) {
       console.error(error, 'category Error');
     }
@@ -43,11 +44,14 @@ const Catalogue = () => {
         <View style={styles.grid}>
           {displayedCategories.map((ele, i) => (
             <TouchableOpacity
+              // onPress={() =>
+              //   navigation.navigate(
+              //     ScreenNames.productsList,
+              //     `category_id=${ele?.id}`,
+              //   )
+              // }
               onPress={() =>
-                navigation.navigate(
-                  ScreenNames.productsList,
-                  `category_id=${ele?.id}`,
-                )
+                navigation.navigate(ScreenNames.accessories, ele?.id)
               }
               key={ele?.id}
               style={[styles.boxView, {marginLeft: i % 3 === 0 ? 10 : 0}]}>
@@ -57,13 +61,15 @@ const Catalogue = () => {
             </TouchableOpacity>
           ))}
         </View>
-        <TouchableOpacity
-          style={styles.viewAllBtn}
-          onPress={() => setShowAll(!showAll)}>
-          <Text style={styles.viewAllText}>
-            {showAll ? 'Show Less' : 'View All'}
-          </Text>
-        </TouchableOpacity>
+        {category.length > 6 && (
+          <TouchableOpacity
+            style={styles.viewAllBtn}
+            onPress={() => setShowAll(!showAll)}>
+            <Text style={styles.viewAllText}>
+              {showAll ? 'Show Less' : 'View All'}
+            </Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
     </View>
   );
