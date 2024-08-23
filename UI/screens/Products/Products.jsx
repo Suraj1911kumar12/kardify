@@ -3,13 +3,11 @@ import {
   FlatList,
   Image,
   ImageBackground,
-  Pressable,
   SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   View,
-  ActivityIndicator,
   TouchableOpacity,
 } from 'react-native';
 import React, {useCallback, useEffect, useState} from 'react';
@@ -58,8 +56,6 @@ const Products = props => {
   }, []);
 
   const addWishList = async id => {
-    console.log(id, 'id');
-
     try {
       const res = await axios.post(
         `/add-to-wishlist`,
@@ -164,7 +160,7 @@ const Products = props => {
             right: 5,
             padding: 6,
           }}>
-          <Icon name="heart-outlined" size={20} color={Color.white} />
+          <Icon name="heart-outlined" size={20} color={Color.black} />
         </TouchableOpacity>
       </TouchableOpacity>
     );

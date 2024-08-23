@@ -14,6 +14,7 @@ export const Color = {
   grey: '#989898',
   red: '#EF4136',
   btnBlack: '#33383D',
-  btnGrey:'#33383E',
-  bgBlack:'#353A40'
+  btnGrey: '#33383E',
+  bgBlack: '#353A40',
+  green: '#229D25',
 };

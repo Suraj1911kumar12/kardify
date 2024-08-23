@@ -59,9 +59,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingVertical: 20,
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 5,
-    width: SCREEN_WIDTH,
-    // paddingHorizontal: 10, // Added padding for better spacing
+    paddingHorizontal: 10, // Added padding for better spacing
   },
   statusItem: {
     // flex: 1,

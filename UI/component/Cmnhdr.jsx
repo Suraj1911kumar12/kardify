@@ -7,9 +7,12 @@ import EnIcon from 'react-native-vector-icons/Entypo';
 import {Color} from '../styles/Color';
 import {useSelector} from 'react-redux';
 import AddressModal from './AddressModal'; // Import the AddressModal component
+import {useNavigation} from '@react-navigation/native';
+import ScreenNames from '../constants/Screens';
 
 const Cmnhdr = props => {
   const {backIcon, title} = props;
+  const navigation = useNavigation();
   const auth = UseAuth();
   const userDetail = useSelector(state => state.profile);
   const userAddress = useSelector(state => state.address);
@@ -20,7 +23,7 @@ const Cmnhdr = props => {
     setModalVisible(true);
   };
 
-  const handleSelectAddress = (selectedAddress) => {
+  const handleSelectAddress = selectedAddress => {
     // Handle the logic to update the selected address
     setModalVisible(false);
     // Optionally, dispatch an action to update the selected address in the store
@@ -73,7 +76,7 @@ const Cmnhdr = props => {
 
       <View style={styles.thirdView}>
         <TouchableOpacity
-          // onPress={props.notification}
+          onPress={() => navigation.navigate(ScreenNames.wishlist)}
           style={styles.circleView}>
           <Icon name="heart" style={{fontSize: 20, color: Color.grey}} />
         </TouchableOpacity>
@@ -100,7 +103,6 @@ const Cmnhdr = props => {
 export default Cmnhdr;
 
 // Styles remain the same as before
-
 
 const styles = StyleSheet.create({
   header: {

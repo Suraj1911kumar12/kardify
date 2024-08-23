@@ -33,6 +33,7 @@ import ForgotPasswordOTP from '../../screens/Auth/ForgotpasswordOTP';
 import ChangePassword from '../../screens/Auth/ChangePassword';
 import SignUpDetails from '../../screens/Auth/SignUp/SignUpDetails';
 import Accessories from '../../screens/Dashboard/Accessories';
+import WishList from '../../screens/Wishlist/WishList';
 
 const Stack = createNativeStackNavigator();
 
@@ -103,6 +104,7 @@ const Mainstacknavigator = () => {
               name={ScreenNames.productdetails}
               component={ProductDetails}
             />
+            <Stack.Screen name={ScreenNames.wishlist} component={WishList} />
           </>
         ) : (
           <>

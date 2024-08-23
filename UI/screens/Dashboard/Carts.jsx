@@ -8,11 +8,12 @@ import {
   TouchableOpacity,
   FlatList,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import React, {useCallback, useEffect, useState} from 'react';
 import Cmnhdr2 from '../../component/Cmnheader2';
 import {Color} from '../../styles/Color';
-import axios from 'axios';
+import axios from '../../../axios';
 import {apis} from '../../utils/api';
 import CustomButton from '../../component/CustomButton';
 import Icon from 'react-native-vector-icons/AntDesign';
@@ -21,111 +22,193 @@ import {useNavigation} from '@react-navigation/native';
 import ScreenNames from '../../constants/Screens';
 import {useDispatch, useSelector} from 'react-redux';
 import {removeProduct} from '../../redux/slice/cartSlice';
+import {UseAuth} from '../../context/AuthContext';
+import {showMessage} from 'react-native-flash-message';
+import {SCREEN_HEIGHT} from '../../styles/Size';
 
 const Carts = () => {
+  const auth = UseAuth();
+
   const addedData = useSelector(state => state);
   const dispatch = useDispatch();
   const address = addedData?.address;
+
+  const [priceData, setPriceData] = useState({
+    totalPrice: 0,
+    totalMrp: 0,
+    discount: 0,
+    tax: 0,
+    finalPrice: 0,
+  });
   // console.log(address,'address');
 
   const navigation = useNavigation();
 
   const getCartApi = apis.baseUrl + apis.getCart;
 
-  const [addBtn, setAddBtn] = useState(1);
   const [cartData, setCartData] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const getDataCart = useCallback(async () => {
+    setLoading(true);
     try {
-      const res = await axios.get(getCartApi);
-      // console.log(res?.data?.carts);
-      // setCartData(res?.data?.carts);
+      const res = await axios.get(getCartApi, {
+        headers: {
+          Authorization: auth.token,
+        },
+      });
+      if (res?.data?.code === 200) {
+        setCartData(res?.data?.cartItems);
+
+        setPriceData({
+          totalPrice: res?.data?.totalPrice,
+          totalMrp: res?.data?.totalNetPrice,
+          discount: res?.data?.totalNetPrice - res?.data?.totalPrice,
+        });
+      }
     } catch (error) {
-      console.log(error, 'Error while getting carts values');
+      console.error(error);
+    } finally {
+      setLoading(false);
     }
-  }, []);
+  }, [auth.token]);
 
   useEffect(() => {
-    getDataCart();
-    setCartData(addedData.item);
-  }, [addedData.item, dispatch]);
+    const fetchData = async () => {
+      await getDataCart();
+    };
+    fetchData();
+  }, [getDataCart]);
+  const updateCartData = () => {
+    getDataCart(); // Fetch updated cart data
+  };
 
-  const dummyData = [
-    {
-      id: 1,
-      title: 'Decorative Shark Fin Carbon Fiber Finish Antenna-3',
-      rating: 4.3,
-      price: 999,
-      mrp: 2205,
-      image: require('../../../assets/images/CarSection/carwheel.png'),
-    },
-    {
-      id: 2,
-      title: 'Decorative Shark Fin Carbon Fiber Finish Antenna-3',
-      rating: 4.3,
-      price: 999,
-      mrp: 2205,
-      image: require('../../../assets/images/CarSection/carwheel.png'),
-    },
-    {
-      id: 3,
-      title: 'Decorative Shark Fin Carbon Fiber Finish Antenna-3',
-      rating: 4.3,
-      price: 999,
-      mrp: 2205,
-      image: require('../../../assets/images/CarSection/carwheel.png'),
-    },
-  ];
+  const increseQuantity = async (id, combinationID) => {
+    try {
+      const res = await axios.post(
+        `/cart-increament`,
+        {
+          product_id: id,
+          combination_id: combinationID,
+        },
+        {
+          headers: {
+            Authorization: auth.token,
+          },
+        },
+      );
+      if (res?.data?.code === 200) {
+        showMessage({
+          message: res?.data?.message || 'Quantity increased successfully',
+          type: 'success',
+        });
+        updateCartData();
+      }
+    } catch (error) {
+      showMessage({
+        message:
+          error.response.data.message || 'Error while increasing quantity',
+        type: 'danger',
+      });
+    }
+  };
+  const decreseQuantity = async (id, combinationID) => {
+    try {
+      const res = await axios.post(
+        `/cart-increament`,
+        {
+          product_id: id,
+          combination_id: combinationID,
+        },
+        {
+          headers: {
+            Authorization: auth.token,
+          },
+        },
+      );
+      if (res?.data?.code === 200) {
+        showMessage({
+          message: res?.data?.message || 'Quantity increased successfully',
+          type: 'success',
+        });
+        updateCartData();
+      }
+    } catch (error) {
+      showMessage({
+        message:
+          error.response.data.message || 'Error while increasing quantity',
+        type: 'danger',
+      });
+    }
+  };
 
-  const renderItem = ({item}) => (
-    <View style={styles.itemContainer}>
-      <TouchableOpacity
-        onPress={() => dispatch(removeProduct(item))}
-        style={{position: 'absolute', top: 5, right: 5}}>
-        <Icon name="close" size={20} color={Color.white} />
-      </TouchableOpacity>
+  const renderItem = data => {
+    const item = data?.item;
+    return (
+      <View style={styles.itemContainer}>
+        <TouchableOpacity
+          onPress={() => dispatch(removeProduct(item))}
+          style={{position: 'absolute', top: 5, right: 5}}>
+          <Icon name="close" size={20} color={Color.white} />
+        </TouchableOpacity>
 
-      <View style={styles.itemImageContainer}>
-        <Image
-          source={{uri: apis.baseImgUrl + item?.images[0]?.image_url}}
-          style={styles.itemImage}
-          resizeMode="cover"
-        />
-      </View>
-      <View style={styles.itemTitleContainer}>
-        <Text style={styles.itemTitle}>{item?.product_name}</Text>
-        <Text style={{color: Color.white}}> {item.rating}</Text>
-        <CustomBtn />
-        <View
-          style={{
-            flexDirection: 'row',
-            // justifyContent: 'center',
-            gap: 10,
-            alignItems: 'center',
-          }}>
-          <Text style={{color: Color.grey, fontSize: 20}}>₹ {item.price}</Text>
-          <Text
+        <View style={styles.itemImageContainer}>
+          <Image
+            source={{uri: apis.baseImgUrl + item?.images[0]?.image_url}}
+            style={styles.itemImage}
+            resizeMode="stretch"
+          />
+        </View>
+        <View style={styles.itemTitleContainer}>
+          <Text style={styles.itemTitle}>{item?.product?.product_name}</Text>
+          <Text style={{color: Color.white}}> {item?.product?.rating}</Text>
+          <CustomBtn
+            id={item?.product_id}
+            quantity={item?.quantity}
+            combId={item?.combination_id}
+          />
+          <View
             style={{
-              textDecorationLine: 'line-through',
-              textDecorationStyle: 'solid',
-              color: Color.grey,
-              fontSize: 13,
+              flexDirection: 'row',
+              // justifyContent: 'center',
+              gap: 10,
+              alignItems: 'center',
             }}>
-            M.R.P : {item.mrp}.00
-          </Text>
+            <Text style={{color: Color.grey, fontSize: 20}}>
+              ₹
+              {item?.product?.default_price -
+                (item?.product?.default_price * item?.product?.discount) / 100}
+            </Text>
+            {item?.product?.discount && (
+              <Text
+                style={{
+                  textDecorationLine: 'line-through',
+                  textDecorationStyle: 'solid',
+                  color: Color.grey,
+                  fontSize: 13,
+                }}>
+                M.R.P : ₹ {item?.product?.default_price}
+              </Text>
+            )}
+          </View>
         </View>
       </View>
-    </View>
-  );
-  const CustomBtn = () => (
+    );
+  };
+
+  const CustomBtn = ({id, combId, quantity}) => (
     <View style={styles.customBtnContainer}>
-      <TouchableOpacity style={styles.btn}>
+      <TouchableOpacity
+        onPress={() => decreseQuantity(id, combId)}
+        style={styles.btn}>
         <Text>-</Text>
       </TouchableOpacity>
       <View style={[styles.btn, {backgroundColor: Color.white}]}>
-        <Text style={{color: Color.black}}>{addBtn}</Text>
+        <Text style={{color: Color.black}}>{quantity}</Text>
       </View>
-      <TouchableOpacity style={styles.btn}>
+      <TouchableOpacity
+        onPress={() => increseQuantity(id, combId)}
+        style={styles.btn}>
         <Text>+</Text>
       </TouchableOpacity>
     </View>
@@ -143,27 +226,42 @@ const Carts = () => {
           <Text style={styles.text}>Shipping Fee </Text>
         </View>
         <View style={[styles.pData]}>
-          <Text style={styles.text}>₹ 8,000</Text>
-          <Text style={styles.text}> ₹ 1,080</Text>
+          <Text style={styles.text}>₹ {priceData?.totalMrp}</Text>
+          <Text style={{color: Color.green}}> ₹ {priceData?.discount}</Text>
           <Text style={styles.text}>
             <TouchableOpacity style={styles.addressChange}>
               <Text style={styles.addressTextChange}>Apply Coupan</Text>
             </TouchableOpacity>
           </Text>
-          <Text style={styles.text}>Free </Text>
+          <Text style={{color: Color.green}}>Free </Text>
         </View>
       </View>
       <View style={styles.hr} />
       <View style={styles.priceData}>
         <View style={styles.pData}>
-          <Text style={styles.text}>Total MRP</Text>
+          <Text style={styles.text}>Total Price</Text>
         </View>
         <View style={styles.pData}>
-          <Text style={styles.text}> ₹ 8,000</Text>
+          <Text style={styles.text}> ₹ {priceData?.totalPrice}</Text>
         </View>
       </View>
     </View>
   );
+  const LoadingSkeleton = () => {
+    return (
+      <View style={styles.skeletonContainer}>
+        {[...Array(3)].map((_, index) => (
+          <View key={index} style={styles.skeletonItem}>
+            <View style={styles.skeletonImage} />
+            <View style={styles.skeletonTextContainer}>
+              <View style={styles.skeletonLine} />
+              <View style={styles.skeletonLineShort} />
+            </View>
+          </View>
+        ))}
+      </View>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -194,21 +292,33 @@ const Carts = () => {
               </TouchableOpacity>
             </View>
           )}
-          <FlatList
-            data={cartData}
-            renderItem={renderItem}
-            keyExtractor={item => item.id.toLocaleString()}
-            numColumns={1} // Display 2 items per row
-            contentContainerStyle={{padding: 10, gap: 2, marginBottom: 50}}
-          />
-          <PriceDetails />
-          <CustomButton
-            title="Proceed to checkout "
-            onPressButton={() => navigation.navigate(ScreenNames.checkout)}
-          />
+          {loading ? (
+            <LoadingSkeleton />
+          ) : cartData.length === 0 ? (
+            <View style={styles.emptyCartContainer}>
+              <Text style={styles.emptyCartText}>No cart data available</Text>
+            </View>
+          ) : (
+            <>
+              <FlatList
+                data={cartData}
+                renderItem={renderItem}
+                keyExtractor={item => item.id.toLocaleString()}
+                numColumns={1} // Display 2 items per row
+                contentContainerStyle={{
+                  padding: 10,
+                  gap: 2,
+                  marginBottom: 50,
+                }}
+              />
+              <PriceDetails />
+              <CustomButton
+                title="Proceed to checkout "
+                onPressButton={() => navigation.navigate(ScreenNames.checkout)}
+              />
+            </>
+          )}
         </ScrollView>
-        {/* <View> */}
-        {/* </View> */}
       </ImageBackground>
     </SafeAreaView>
   );
@@ -227,6 +337,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 20,
+  },
+  itemImage: {
+    height: 80,
+    width: 80,
+    borderRadius: 20,
   },
   addressText: {
     flex: 3,
@@ -254,15 +369,18 @@ const styles = StyleSheet.create({
     elevation: 5,
     marginTop: 10,
     position: 'relative',
+    gap: 5,
+    maxHeight: 344,
   },
   itemTitle: {
-    flex: 1,
     color: Color.white,
     lineHeight: 16,
+    fontWeight: '700',
     fontSize: 12,
   },
   itemImageContainer: {
     flex: 1,
+    gap: 5,
   },
   itemTitleContainer: {
     flex: 2,
@@ -318,5 +436,49 @@ const styles = StyleSheet.create({
   },
   text: {
     color: Color.white,
+  },
+  skeletonContainer: {
+    padding: 10,
+  },
+  skeletonItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+    backgroundColor: Color.lightBlack,
+    borderRadius: 10,
+    padding: 10,
+  },
+  skeletonImage: {
+    width: 80,
+    height: 80,
+    backgroundColor: Color.grey,
+    borderRadius: 10,
+  },
+  skeletonTextContainer: {
+    flex: 1,
+    marginLeft: 10,
+  },
+  skeletonLine: {
+    width: '80%',
+    height: 10,
+    backgroundColor: Color.grey,
+    borderRadius: 5,
+    marginBottom: 5,
+  },
+  skeletonLineShort: {
+    width: '60%',
+    height: 10,
+    backgroundColor: Color.grey,
+    borderRadius: 5,
+  },
+  emptyCartContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: SCREEN_HEIGHT / 2,
+  },
+  emptyCartText: {
+    color: Color.white,
+    fontSize: 18,
   },
 });

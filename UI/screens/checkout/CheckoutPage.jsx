@@ -1,4 +1,5 @@
 import {
+  FlatList,
   ImageBackground,
   SafeAreaView,
   ScrollView,
@@ -16,7 +17,8 @@ import CustomButton from '../../component/CustomButton'; // Assuming you have th
 
 const CheckoutPage = () => {
   const [selectedAddress, setSelectedAddress] = useState('Home');
-  const [selectedShippingType, setSelectedShippingType] = useState('Standard Shipping');
+  const [selectedShippingType, setSelectedShippingType] =
+    useState('Standard Shipping');
 
   const handleAddressChange = () => {
     // Logic to change the address
@@ -27,6 +29,61 @@ const CheckoutPage = () => {
     // Logic to change the shipping type
     setSelectedShippingType('Express Shipping'); // Example: Changing to express shipping
   };
+
+  const renderItem = data => {
+    const item = data?.item;
+    return (
+      <View style={styles.itemContainer}>
+        <TouchableOpacity
+          onPress={() => dispatch(removeProduct(item))}
+          style={{position: 'absolute', top: 5, right: 5}}>
+          <Icon name="close" size={20} color={Color.white} />
+        </TouchableOpacity>
+
+        <View style={styles.itemImageContainer}>
+          <Image
+            source={{uri: apis.baseImgUrl + item?.images[0]?.image_url}}
+            style={styles.itemImage}
+            resizeMode="stretch"
+          />
+        </View>
+        <View style={styles.itemTitleContainer}>
+          <Text style={styles.itemTitle}>{item?.product?.product_name}</Text>
+          <Text style={{color: Color.white}}> {item?.product?.rating}</Text>
+          {/* <CustomBtn
+            id={item?.product_id}
+            quantity={item?.quantity}
+            combId={item?.combination_id}
+          /> */}
+          <View
+            style={{
+              flexDirection: 'row',
+              // justifyContent: 'center',
+              gap: 10,
+              alignItems: 'center',
+            }}>
+            <Text style={{color: Color.grey, fontSize: 20}}>
+              ₹
+              {item?.product?.default_price -
+                (item?.product?.default_price * item?.product?.discount) / 100}
+            </Text>
+            {item?.product?.discount && (
+              <Text
+                style={{
+                  textDecorationLine: 'line-through',
+                  textDecorationStyle: 'solid',
+                  color: Color.grey,
+                  fontSize: 13,
+                }}>
+                M.R.P : ₹ {item?.product?.default_price}
+              </Text>
+            )}
+          </View>
+        </View>
+      </View>
+    );
+  };
+  const cartData = [];
 
   return (
     <SafeAreaView style={styles.container}>
@@ -44,7 +101,9 @@ const CheckoutPage = () => {
               <Icon name="location-pin" size={20} color={Color.white} />
               <View style={styles.addressDetails}>
                 <Text style={styles.addressType}>{selectedAddress}</Text>
-                <Text style={styles.addressText}>123 Main St, Anytown, USA 12345</Text>
+                <Text style={styles.addressText}>
+                  123 Main St, Anytown, USA 12345
+                </Text>
               </View>
               <TouchableOpacity onPress={handleAddressChange}>
                 <Text style={styles.changeText}>Change</Text>
@@ -56,7 +115,9 @@ const CheckoutPage = () => {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Shipping Type</Text>
             <View style={styles.shippingTypeContainer}>
-              <Text style={styles.shippingTypeText}>{selectedShippingType}</Text>
+              <Text style={styles.shippingTypeText}>
+                {selectedShippingType}
+              </Text>
               <TouchableOpacity onPress={handleShippingTypeChange}>
                 <Text style={styles.changeText}>Change</Text>
               </TouchableOpacity>
@@ -64,22 +125,17 @@ const CheckoutPage = () => {
           </View>
 
           {/* Order List Section */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Order Summary</Text>
-            <View style={styles.orderList}>
-              {/* Example Order Item */}
-              <View style={styles.orderItem}>
-                <Text style={styles.orderItemName}>Product Name 1</Text>
-                <Text style={styles.orderItemPrice}>$100.00</Text>
-              </View>
-              <View style={styles.orderItem}>
-                <Text style={styles.orderItemName}>Product Name 2</Text>
-                <Text style={styles.orderItemPrice}>$50.00</Text>
-              </View>
-              {/* Add more order items as needed */}
-            </View>
-          </View>
-
+          <FlatList
+            data={cartData}
+            renderItem={renderItem}
+            keyExtractor={item => item.id.toLocaleString()}
+            numColumns={1} // Display 2 items per row
+            contentContainerStyle={{
+              padding: 10,
+              gap: 2,
+              marginBottom: 50,
+            }}
+          />
           {/* Checkout Button */}
           <View style={styles.checkoutButtonContainer}>
             <CustomButton title="Proceed to Payment" onPressButton={() => {}} />
