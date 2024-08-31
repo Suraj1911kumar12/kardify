@@ -37,27 +37,29 @@ const Cmnhdr = props => {
             <Text style={{fontSize: 18, color: Color.white}}>
               Welcome {userDetail?.fullname}
             </Text>
-            <TouchableOpacity onPress={handleAddressPress}>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 3,
-                }}>
-                <EnIcon
-                  name="location-pin"
-                  style={{fontSize: 15, color: Color.white}}
-                />
-                <Text style={{color: Color.white}}>
-                  {userAddress[0]?.city + ' ' + userAddress[0]?.state}
-                </Text>
-                <MiIcon
-                  name="arrow-drop-down"
-                  style={{fontSize: 15, color: Color.white}}
-                />
-              </View>
-            </TouchableOpacity>
+            {userAddress?.length > 0 && (
+              <TouchableOpacity onPress={handleAddressPress}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 3,
+                  }}>
+                  <EnIcon
+                    name="location-pin"
+                    style={{fontSize: 15, color: Color.white}}
+                  />
+                  <Text style={{color: Color.white}}>
+                    {userAddress[0]?.city + ' ' + userAddress[0]?.state}
+                  </Text>
+                  <MiIcon
+                    name="arrow-drop-down"
+                    style={{fontSize: 15, color: Color.white}}
+                  />
+                </View>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       ) : (

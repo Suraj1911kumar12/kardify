@@ -17,14 +17,18 @@ import {UseAuth} from '../../context/AuthContext';
 import {showMessage} from 'react-native-flash-message';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {Color} from '../../styles/Color';
-import {apis} from '../../utils/api';
 import {useNavigation} from '@react-navigation/native';
+import {useDispatch, useSelector} from 'react-redux';
+import {addWishlist} from '../../redux/slice/wishlist';
+import {SCREEN_HEIGHT} from '../../styles/Size';
 
 const WishList = () => {
   const navigation = useNavigation();
   const [wishlist, setWishList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [imageLoading, setImageLoading] = useState({});
+  const dispatch = useDispatch();
+  const selector = useSelector(state => state);
   const auth = UseAuth();
 
   const getWishList = async () => {
@@ -36,10 +40,7 @@ const WishList = () => {
       });
       if (res?.data?.code === 200) {
         setWishList(res?.data?.data);
-        // showMessage({
-        //   message: res?.data?.message || 'Wishlist fetched successfully.',
-        //   type: 'success',
-        // });
+        dispatch(addWishlist(res?.data?.data));
       } else {
         showMessage({
           message: res?.data?.message || 'No wishlist found.',
@@ -58,6 +59,9 @@ const WishList = () => {
   };
   useEffect(() => {
     getWishList();
+    console.log('====================================');
+    console.log(wishlist[0]?.product_id, wishlist[1]?.product_id, 'wish');
+    console.log('====================================');
   }, [auth.token]);
 
   const removeFromWishList = useCallback(
@@ -212,9 +216,7 @@ const WishList = () => {
                 justifyContent: 'center',
                 height: SCREEN_HEIGHT - 150,
               }}>
-              <Text style={{color: Color.white, fontSize: 20}}>
-                No Products
-              </Text>
+              <Text style={{color: Color.white, fontSize: 20}}>No Items</Text>
             </View>
           )}
         </ScrollView>

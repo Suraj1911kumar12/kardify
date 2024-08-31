@@ -1,5 +1,3 @@
-// import { baseUrl } from "../api/api";
-
 export const apis = {
   // -----------------------auth api's----------------------
   // baseUrl:"http://api.kardify.in/api",
@@ -9,7 +7,7 @@ export const apis = {
   login: '/login-user-dealer?type=CUSTOMER',
   forgotpassword: '/send-otp-forgot-password?type=CUSTOMER',
   //-----------------------base url for images-----------------
-  baseImgUrl: 'http://api.kardify.in',
+  baseImgUrl: process.env.IMAGE_API_URL,
   // -----------------------Dash Home -----------------
   brands: '/fetch-car-brands-customers',
   testimonials: '/fetch-all-testimonials-customers',

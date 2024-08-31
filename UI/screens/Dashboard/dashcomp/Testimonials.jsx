@@ -1,10 +1,11 @@
-import {View, Text, Image, StyleSheet, FlatList} from 'react-native';
+import {View, Text, Image, StyleSheet} from 'react-native';
 import React, {useEffect, useState, useCallback} from 'react';
-import {SCREEN_HEIGHT, SCREEN_WIDTH} from '../../../styles/Size';
+import Swiper from 'react-native-swiper';
 import axios from '../../../../axios';
 import {apis} from '../../../utils/api';
 import {AirbnbRating} from 'react-native-ratings';
 import {Color} from '../../../styles/Color';
+import {SCREEN_HEIGHT, SCREEN_WIDTH} from '../../../styles/Size';
 
 const Testimonials = () => {
   const [imgError, setImgError] = useState({});
@@ -30,7 +31,7 @@ const Testimonials = () => {
   }, []);
 
   const renderItem = useCallback(
-    ({item}) => (
+    item => (
       <View style={styles.cmnbdy}>
         <Image
           source={
@@ -62,28 +63,38 @@ const Testimonials = () => {
   );
 
   return (
-    <FlatList
-      data={testimonials}
-      renderItem={renderItem}
-      keyExtractor={item => item.id.toString()}
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      pagingEnabled
-      snapToAlignment="center"
-      decelerationRate="fast"
-    />
+    <Swiper
+      style={styles.wrapper}
+      showsPagination={true}
+      paginationStyle={styles.paginationStyle}
+      dotStyle={styles.dotStyle}
+      activeDotStyle={styles.activeDotStyle}
+      contentContainerStyle={styles.contentContainer}>
+      {testimonials.map(item => (
+        <View key={item.id} style={styles.slide}>
+          {renderItem(item)}
+        </View>
+      ))}
+    </Swiper>
   );
 };
 
 export default Testimonials;
 
 const styles = StyleSheet.create({
-  cmnbdy: {
+  wrapper: {
     height: SCREEN_HEIGHT / 4,
+  },
+  slide: {
     width: SCREEN_WIDTH / 1.25,
-    marginBottom: 1,
-    backgroundColor: '#1C1F22',
     marginLeft: 10,
+    justifyContent: 'center', // Center vertically
+    alignItems: 'center', // Center horizontally
+  },
+  cmnbdy: {
+    height: '100%',
+    width: '100%',
+    backgroundColor: '#1C1F22',
     borderRadius: 10,
     display: 'flex',
     flexDirection: 'column',
@@ -113,5 +124,17 @@ const styles = StyleSheet.create({
   customerName: {
     color: Color.white,
     marginTop: 5,
+  },
+  paginationStyle: {
+    bottom: 10,
+  },
+  dotStyle: {
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+  },
+  activeDotStyle: {
+    backgroundColor: '#04A9F5',
+  },
+  contentContainer: {
+    alignItems: 'center', // Center horizontally in Swiper container
   },
 });

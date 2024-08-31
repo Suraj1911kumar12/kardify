@@ -4,11 +4,6 @@ import AntDesign from 'react-native-vector-icons/AntDesign';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
 import ScreenNames from '../../constants/Screens';
-// import MainHome from '../../screens/Dashboard/MainHome';
-// import Accessories from '../../screens/Dashboard/Accessories';
-// import More from '../../screens/Dashboard/More';
-// import Stories from '../../screens/Dashboard/Stories';
-// import Carts from '../../screens/Dashboard/Carts';
 
 const MainHome = React.lazy(() => import('../../screens/Dashboard/MainHome'));
 const More = React.lazy(() => import('../../screens/Dashboard/More'));

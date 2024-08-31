@@ -66,7 +66,23 @@ const EngineHeading = props => {
   }
 
   if (!stories.length) {
-    return <Text>No stories available.</Text>;
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}>
+        <Text
+          style={{
+            color: '#ffffff',
+            fontSize: 16,
+            textAlign: 'center',
+          }}>
+          No stories available
+        </Text>
+      </View>
+    );
   }
 
   return (

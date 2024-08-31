@@ -24,12 +24,16 @@ import {Color} from '../../styles/Color';
 
 const Signin = props => {
   const auth = UseAuth();
-  const [username, setUserName] = useState('suraj.softfix@gmail.com');
-  const [password, setPassword] = useState('123456');
+  const [username, setUserName] = useState('');
+  const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(true);
 
   const handleLogin = () => {
     auth.login(username, password);
+  };
+  const handleSkip = async () => {
+    auth.setIsAuthenticated(true);
+    props.navigation.navigate(ScreenNames.Home);
   };
 
   return (
@@ -45,6 +49,29 @@ const Signin = props => {
             barStyle="light-content"
             hidden={false}
           />
+          <TouchableOpacity
+            onPress={handleSkip}
+            style={{
+              position: 'absolute',
+              top: 20,
+              right: 20,
+              zIndex: 1,
+              backgroundColor: 'rgba(0, 0, 0, 0.2)',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 100,
+              height: 50,
+              borderRadius: 20,
+            }}>
+            <Text
+              style={{
+                color: Color.white,
+                fontWeight: 'bold',
+                fontSize: 16,
+              }}>
+              Skip
+            </Text>
+          </TouchableOpacity>
           <LoginHeader />
           <View style={styles.signin}>
             <Text style={styles.signinText}>Sign In</Text>

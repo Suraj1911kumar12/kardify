@@ -18,17 +18,15 @@ import {Color} from '../../styles/Color';
 import axios from '../../../axios';
 import {apis} from '../../utils/api';
 import RenderHTML from 'react-native-render-html';
-import {addProduct} from '../../redux/slice/cartSlice';
 import {useDispatch, useSelector} from 'react-redux';
 import {UseAuth} from '../../context/AuthContext';
 import {showMessage} from 'react-native-flash-message';
 import {AirbnbRating} from 'react-native-ratings';
+import {addProduct} from '../../redux/slice/cartSlice';
 
 const ProductDetails = ({route, navigation}) => {
   const auth = UseAuth();
   const {id} = route.params;
-
-  // console.log(id, 'id');
 
   const {width} = useWindowDimensions();
 
@@ -45,6 +43,7 @@ const ProductDetails = ({route, navigation}) => {
     combination_id: '',
     quantity: '',
   });
+  const dispatch = useDispatch();
 
   const getProductDetails = useCallback(async () => {
     try {
@@ -82,11 +81,8 @@ const ProductDetails = ({route, navigation}) => {
 
   const addToCart = product => {
     try {
+      // addCartApiData(product?.id, selectedAttribute?.id, product?.quantity);
       dispatch(addProduct(product));
-      showMessage({
-        message: 'Product added to cart!',
-        type: 'success',
-      });
     } catch (error) {
       showMessage({
         message: error.message,
@@ -95,54 +91,48 @@ const ProductDetails = ({route, navigation}) => {
     }
   };
 
+  const addCartApiData = async (prId, comId, qunt) => {
+    try {
+      const response = await axios.post(
+        '/add-to-cart',
+        {
+          product_id: prId,
+          combination_id: comId || null,
+          quantity: 1,
+        },
+        {
+          headers: {
+            Authorization: auth.token,
+          },
+        },
+      );
+
+      if (response.data.code === 200) {
+        showMessage({
+          message: 'Product added to cart!',
+          type: 'success',
+        });
+      } else {
+        showMessage({
+          message: response.data.message,
+          type: 'warning',
+        });
+      }
+    } catch (error) {
+      showMessage({
+        message:
+          error?.response.data.message || 'Error adding product to cart!',
+        type: 'danger',
+      });
+    }
+  };
+
   useEffect(() => {
     getProductDetails();
   }, []);
-  // / console.log(selectedAttribute, 'new');
-  // const resp = await axios.post(
-  //   '/add-to-cart',
-  //   {
-  //     product_id: addData.id,
-  //     combination_id: selectedAttribute?.id,
-  //     quantity: addData.quantity,
-  //   },
-  //   {
-  //     headers: {
-  //       Authorization: auth.token,
-  //     },
-  //   },
-  // );
 
-  // if (resp.data.code === 200) {
-  //   console.log('Product added to cart successfully');
-  //   showMessage({
-  //     message: 'Product added to cart',
-  //     type: 'success',
-  //   });
-  // } else {
-  //   // console.log('Error adding product to cart');
-  //   showMessage({
-  //     message: resp.data.message || 'Error adding product to cart',
-  //     type: 'danger',
-  //   });
-  // }
-
-  // console.log(selectedAttribute, addData, 'selcedsfd');
-
-  const dispatch = useDispatch();
   const addedItem = useSelector(state => state);
   console.log(addedItem?.item, 'addeditem');
-
-  const addItem = item => {
-    // if (selectedAttribute) {
-    addToCart(item);
-    // } else {
-    // showMessage({
-    //   message: 'Please select an attribute',
-    //   type: 'danger',
-    // });
-    // }
-  };
 
   const handleScroll = event => {
     const offsetX = event.nativeEvent.contentOffset.x;
@@ -178,17 +168,19 @@ const ProductDetails = ({route, navigation}) => {
             showsHorizontalScrollIndicator={false}
             keyExtractor={image => image.id.toString()}
             renderItem={({item: image}) => (
-              <Image
-                style={{
-                  width: width - 40,
-                  height: 200,
-                  borderTopLeftRadius: 10,
-                  borderTopRightRadius: 10,
-                  borderWidth: 2,
-                }}
-                source={{uri: apis.baseImgUrl + image?.image_url}}
-                resizeMode="contain"
-              />
+              <>
+                <Image
+                  style={{
+                    width: width - 40,
+                    height: 200,
+                    borderTopLeftRadius: 10,
+                    borderTopRightRadius: 10,
+                    borderWidth: 2,
+                  }}
+                  source={{uri: apis.baseImgUrl + image?.image_url}}
+                  resizeMode="contain"
+                />
+              </>
             )}
             onScroll={handleScroll} // Track the scroll event
             ref={flatListRef} // Attach the reference
@@ -543,8 +535,8 @@ const ProductDetails = ({route, navigation}) => {
           }}>
           <TouchableOpacity
             onPress={() => {
-              addItem(productDetail[0]);
-              // addToCart()
+              // addItem(productDetail[0]);
+              addToCart();
             }} // Correctly passing the item
             style={[
               styles.button,

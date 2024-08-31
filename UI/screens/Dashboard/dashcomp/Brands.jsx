@@ -14,7 +14,7 @@ import {Color} from '../../../styles/Color';
 import {useNavigation} from '@react-navigation/native';
 import ScreenNames from '../../../constants/Screens';
 
-const width = Dimensions.get('screen').width;
+const {width} = Dimensions.get('screen');
 
 const Brands = () => {
   const navigation = useNavigation();
@@ -38,7 +38,10 @@ const Brands = () => {
   const renderBrandItem = ({item}) => (
     <TouchableOpacity
       onPress={() =>
-        navigation.navigate(ScreenNames.productsList, `brand_id=${item?.id}`)
+        navigation.navigate(
+          ScreenNames.productsList,
+          `product_brand_id=${item?.id}`,
+        )
       }
       style={styles.subBrandView}>
       <View style={styles.innerShow}>
@@ -86,36 +89,44 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   brandTitle: {
-    color: 'white',
-    fontSize: 16,
-    lineHeight: 24,
-    fontWeight: '500',
+    color: Color.white,
+    fontSize: 18,
+    fontWeight: '600',
     marginVertical: 15,
     textAlign: 'center',
   },
   subBrandView: {
-    height: 75,
-    marginHorizontal: 8,
+    height: 90,
+    marginHorizontal: 10,
     width: width / 4,
-    textAlign: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   innerShow: {
     width: '100%',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   imageContainer: {
-    height: 55,
+    height: 70,
+    width: 70,
     justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 10,
+    backgroundColor: '#1C1F22',
     padding: 5,
+    marginBottom: 5,
   },
   brandImage: {
     width: '100%',
     height: '100%',
+    borderRadius: 10,
   },
   brandText: {
     textAlign: 'center',
     color: Color.white,
-    marginTop: 5,
+    fontSize: 14,
+    fontWeight: '500',
   },
   noBrandsText: {
     color: Color.white,

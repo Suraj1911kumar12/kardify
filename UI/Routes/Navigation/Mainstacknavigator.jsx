@@ -135,6 +135,7 @@ const Mainstacknavigator = () => {
               name={ScreenNames.ChangePassword}
               component={ChangePassword}
             />
+            <Stack.Screen name={ScreenNames.Home} component={Home} />
           </>
         )}
       </Stack.Navigator>

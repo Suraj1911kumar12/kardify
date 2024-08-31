@@ -16,14 +16,7 @@ const DrawerHome = props => {
           barStyle="light-content"
           hidden={false}
         />
-        {/* <Cmnhdr
-          backIcon
-          title="Kardify"
-          onPress={() => props.navigation.openDrawer()}
-          notification={() =>
-            props.navigation.navigate(ScreenNames.notification)
-          }
-        /> */}
+
         <TabStackNavigator />
       </ImageBackground>
     </View>

@@ -5,10 +5,9 @@ import {
   StatusBar,
   Dimensions,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
   Image,
-  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import LinearGradient from 'react-native-linear-gradient';
@@ -16,35 +15,85 @@ import AuthCommonHeader from '../../../component/AuthCommonHeader';
 import {SCREEN_HEIGHT, SCREEN_WIDTH} from '../../../styles/Size';
 import Display from '../../../styles/display/untils';
 import CustomButton from '../../../component/CustomButton';
-import ScreenNames from '../../../constants/Screens';
 import OTPTextView from 'react-native-otp-textinput';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {UseAuth} from '../../../context/AuthContext';
+import {showMessage} from 'react-native-flash-message';
 
 const {height, width} = Dimensions.get('screen');
 
 const SignUpNumberOtp = props => {
   const [otp, setOtp] = useState('');
   const [id, setID] = useState({});
+  const [counter, setCounter] = useState(30);
+  const [disabled, setDisabled] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const getAsyncData = async () => {
     const jsonValue = await AsyncStorage.getItem('user');
-    console.log('jsonValue', jsonValue);
     setID(jsonValue);
-    console.log('idds', id);
   };
+
   useEffect(() => {
     getAsyncData();
-  }, []);
+
+    const interval = setInterval(() => {
+      if (counter > 0) {
+        setCounter(prevCounter => prevCounter - 1);
+      } else {
+        setDisabled(false);
+        clearInterval(interval);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [counter]);
 
   const auth = UseAuth();
 
-  const handleVerifyOtp = async e => {
-    if (otp.length > 4) {
-      Alert.alert('Error', 'fill otp');
+  const handleVerifyOtp = async () => {
+    if (otp.length !== 4) {
+      showMessage({
+        message: 'Error',
+        description: 'Please fill in the 4-digit OTP.',
+        type: 'danger',
+      });
     } else {
-      console.log(otp, id);
-      await auth.signupOTPVerify(otp);
+      setLoading(true);
+      try {
+        await auth.signupOTPVerify(otp);
+      } catch (error) {
+        showMessage({
+          message: 'Error',
+          description: 'Failed to verify OTP. Please try again.',
+          type: 'danger',
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setCounter(30);
+    setDisabled(true);
+    setLoading(true);
+    try {
+      // Replace with actual API call to resend OTP
+      await auth.resendOTP(); // Ensure this method exists in your auth context
+      showMessage({
+        message: 'OTP Resent',
+        description: 'A new OTP has been sent to your email.',
+        type: 'success',
+      });
+    } catch (error) {
+      showMessage({
+        message: 'Error',
+        description: 'Failed to resend OTP. Please try again.',
+        type: 'danger',
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -79,78 +128,17 @@ const SignUpNumberOtp = props => {
                 textAlign: 'center',
                 color: '#FFFFFF',
               }}>
-              We have sent an Email with a 4-digit-code
-            </Text>
-            <Text
-              style={{
-                textAlign: 'center',
-                fontSize: height / 65,
-                color: '#FFFFFF',
-              }}>
-              {/* to {email} */}
+              We have sent an Email with a 4-digit code
             </Text>
           </View>
           <View style={styles.otpContainer}>
-            {/* <View style={styles.otpBox}>
-                            <TextInput
-                                placeholder=""
-                                style={styles.otpText}
-                                keyboardType="number-pad"
-                                maxLength={1}
-                            // ref={firstInput}
-                            // onChangeText={text => {
-                            //     setOtp({ ...otps, 1: text });
-                            //     text && secondInput.current.focus();
-                            // }}
-                            />
-                        </View>
-                        <View style={styles.otpBox}>
-                            <TextInput
-                                placeholder=""
-                                style={styles.otpText}
-                                keyboardType="number-pad"
-                                maxLength={1}
-                            // ref={secondInput}
-                            // onChangeText={text => {
-                            //     setOtp({ ...otps, 2: text });
-                            //     text
-                            //         ? thirdInput.current.focus()
-                            //         : firstInput.current.focus();
-                            // }}
-                            />
-                        </View>
-                        <View style={styles.otpBox}>
-                            <TextInput
-                                placeholder=""
-                                style={styles.otpText}
-                                keyboardType="number-pad"
-                                maxLength={1}
-                            // ref={thirdInput}
-                            // onChangeText={text => {
-                            //     setOtp({ ...otps, 3: text });
-                            //     text
-                            //         ? fourthInput.current.focus()
-                            //         : secondInput.current.focus();
-                            // }}
-                            />
-                        </View>
-                        <View style={styles.otpBox}>
-                            <TextInput
-                                placeholder=""
-                                style={styles.otpText}
-                                keyboardType="number-pad"
-                                maxLength={1}
-                            // ref={fourthInput}
-                            // onChangeText={text => {
-                            //     setOtp({ ...otps, 4: text });
-                            //     !text && thirdInput.current.focus();
-                            // }}
-                            />
-                        </View> */}
             <OTPTextView
               inputCount={4}
               tintColor={'#1C1F22'}
-              handleTextChange={e => setOtp(e)}
+              handleTextChange={setOtp}
+              keyboardType="number-pad"
+              accessibilityLabel="OTP input"
+              accessibilityHint="Enter the 4-digit OTP code you received."
             />
           </View>
 
@@ -158,15 +146,33 @@ const SignUpNumberOtp = props => {
             <Text style={styles.sendtxt}>
               Resend in{' '}
               <Text style={styles.txt}>
-                00:
-                {/* {counter} */}
+                00:{counter < 10 ? `0${counter}` : counter}
               </Text>
             </Text>
+            <TouchableOpacity
+              disabled={disabled}
+              onPress={handleResendOtp}
+              style={[styles.resendButton, {opacity: disabled ? 0.5 : 1}]}
+              accessibilityLabel="Resend OTP"
+              accessibilityHint="Tap to resend the OTP code.">
+              {loading ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Text style={{color: '#FFFFFF'}}>Resend OTP</Text>
+              )}
+            </TouchableOpacity>
           </View>
 
           <View style={styles.BTN}>
-            <TouchableOpacity>
-              <CustomButton onPressButton={handleVerifyOtp} title="Submit" />
+            <TouchableOpacity
+              onPress={handleVerifyOtp}
+              accessibilityLabel="Submit OTP"
+              accessibilityHint="Tap to submit the OTP code.">
+              <CustomButton
+                onPressButton={handleVerifyOtp}
+                title={loading ? 'Submitting...' : 'Submit'}
+                disabled={loading}
+              />
             </TouchableOpacity>
           </View>
           <View style={styles.cmnimg}>
@@ -185,53 +191,20 @@ const SignUpNumberOtp = props => {
 export default SignUpNumberOtp;
 
 const styles = StyleSheet.create({
-  mbleno: {
-    // height:SCREEN_HEIGHT/20,
-    width: SCREEN_WIDTH / 1.1,
-    // backgroundColor:"yellow",
-    alignSelf: 'center',
-    marginBottom: 10,
-    // justifyContent:'flex-end'
-  },
-  inputBox: {
-    height: 45,
-    width: SCREEN_WIDTH / 1.1,
-    borderRadius: 8,
-    //backgroundColor:"red",
-    backgroundColor: '#1C1F22',
-    alignSelf: 'center',
-    flexDirection: 'row',
-    marginBottom: 20,
-  },
   maincontainer: {
     height: height / 1,
     width: width / 1,
-    //backgroundColor: '#FFFFFF',
   },
   verifyView: {
     height: Display.setHeight(10),
     width: Display.setWidth(1.1),
-    // backgroundColor: "yellow",
     alignSelf: 'center',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  txt: {
-    //fontFamily: Medium,
-    fontWeight: 'bold',
-    fontSize: Display.setHeight(40),
-    color: 'rgba(255, 255, 255, 1)',
-  },
-  txtSent: {
-    //fontFamily: Medium,
-    fontWeight: 'bold',
-    fontSize: Display.setHeight(48),
-    color: 'rgba(23, 23, 22, 1)',
-  },
   sentView: {
     height: Display.setHeight(24),
     width: Display.setWidth(1.4),
-    // backgroundColor: "green",
     alignSelf: 'center',
     justifyContent: 'center',
   },
@@ -239,77 +212,38 @@ const styles = StyleSheet.create({
     justifyContent: 'space-evenly',
     alignItems: 'flex-end',
     flexDirection: 'row',
-    // backgroundColor: 'red',
     alignSelf: 'center',
     height: Display.setHeight(7),
     width: Display.setWidth(1.2),
   },
-  otpBox: {
-    height: Display.setHeight(16),
-    width: Display.setWidth(8.2),
-    justifyContent: 'center',
-    alignItems: 'center',
-    // backgroundColor: '#1C1F22',
-    backgroundColor: '#1C1F22',
-    elevation: 8,
-    opacity: 5,
-    x: 1,
-    y: 3,
-    // borderTopWidth:1,
-    // borderLeftWidth:1,
-    // borderRightWidth:1,
-    // borderBottomWidth:1,
-    borderRadius: 5,
-    borderColor: '#000000',
-    marginBottom: 20,
-  },
-  otpText: {
-    //fontFamily: Medium,
-    fontSize: Display.setHeight(35),
-    padding: 0,
-    textAlign: 'center',
-    // color: Colors.black
-    color: '#000000',
-  },
   resendOtp: {
+    flexDirection: 'row',
     height: Display.setHeight(13),
     width: Display.setWidth(1.1),
-    //backgroundColor: "green",
     alignSelf: 'center',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
     alignItems: 'center',
+    gap: 10,
   },
   sendtxt: {
     color: '#858585',
-    // fontFamily: Bold,
     fontWeight: 'bold',
     fontSize: Display.setHeight(48),
   },
-  Img: {
-    height: height / 3.4,
-    width: width / 1.1,
-    // backgroundColor:'red',
-    alignSelf: 'center',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
+  resendButton: {
+    padding: 10,
+    borderRadius: 5,
   },
   BTN: {
     height: height / 10,
     width: width / 1.1,
-    // backgroundColor:'pink',
     alignSelf: 'center',
     justifyContent: 'flex-end',
   },
   cmnimg: {
     height: SCREEN_HEIGHT / 2.2,
     width: SCREEN_WIDTH / 1,
-    //backgroundColor:"red",
     justifyContent: 'flex-end',
     alignItems: 'center',
-  },
-  leftInputBox: {
-    height: '100%',
-    paddingHorizontal: 17,
-    justifyContent: 'center',
   },
 });

@@ -22,7 +22,6 @@ const Cmnhdr2 = props => {
   const auth = UseAuth();
 
   const items = useSelector(state => state);
-  // console.log(items?.item, 'items');
 
   const addedLength = items?.item?.length;
 

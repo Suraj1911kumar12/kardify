@@ -10,15 +10,14 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
-import React, {useEffect, useState, useCallback} from 'react';
-
+import React, {useEffect, useState} from 'react';
 import axios from '../../../axios';
 import {apis} from '../../utils/api';
 import {Color} from '../../styles/Color';
-import Icon from 'react-native-vector-icons/MaterialIcons';
 import Cmnhdr2 from '../../component/Cmnheader2';
 import {useNavigation} from '@react-navigation/native';
-import ScreenNames from '../../constants/Screens';
+import Icon from 'react-native-vector-icons/FontAwesome'; // Import your icon library
+import {UseAuth} from '../../context/AuthContext';
 
 const Accessories = props => {
   const navigation = useNavigation();
@@ -29,6 +28,10 @@ const Accessories = props => {
   const [loading, setLoading] = useState(true);
   const [selectedSubId, setSelectedSubId] = useState(null);
   const {params} = props.route;
+  const auth = UseAuth();
+  // console.log('====================================');
+  // console.log(auth.token);
+  // console.log('====================================');
 
   useEffect(() => {
     const getSubCategories = async () => {
@@ -53,6 +56,10 @@ const Accessories = props => {
 
   useEffect(() => {
     if (subId) {
+      // console.log('====================================');
+      // console.log('id', subId, 'id');
+
+      // console.log('====================================');
       const getSuperSubCategories = async () => {
         try {
           const res = await axios.get(
@@ -72,14 +79,7 @@ const Accessories = props => {
   }, [subId]);
 
   const handleSubCategoryPress = id => {
-    if (selectedSubId === id) {
-      // If the same subcategory is clicked again, close the super subcategory list
-      setSelectedSubId(null);
-      setSuperSubCat([]);
-    } else {
-      setSelectedSubId(id);
-      setSubId(id);
-    }
+    setSubId(id);
   };
 
   const renderItem = ({item}) => (
@@ -96,29 +96,10 @@ const Accessories = props => {
         <View style={{width: '70%'}}>
           <Text style={styles.text}>{item.sub_category_name}</Text>
         </View>
-        <View style={{width: '10%'}}>
-          {/* {selectedSubId === item?.id && superSubCat?.length > 0 && (
-            <Icon name="arrow-forward-ios" style={styles.icon} />
-          )} */}
+        <View style={{width: '10%', alignItems: 'center'}}>
+          <Icon name="chevron-down" size={20} color={Color.white} />
         </View>
       </TouchableOpacity>
-      {selectedSubId === item?.id &&
-        superSubCat?.length > 0 &&
-        superSubCat.map(superItem => (
-          <View key={superItem.id} style={styles.superSubCard}>
-            <TouchableOpacity
-              onPress={() =>
-                navigation.navigate(
-                  ScreenNames.productsList,
-                  `super_sub_category_id=${superItem.id}`,
-                )
-              }>
-              <Text style={styles.superSubText}>
-                {superItem?.super_sub_category_name}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        ))}
     </View>
   );
 

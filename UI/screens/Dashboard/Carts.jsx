@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   FlatList,
   Image,
-  ActivityIndicator,
 } from 'react-native';
 import React, {useCallback, useEffect, useState} from 'react';
 import Cmnhdr2 from '../../component/Cmnheader2';
@@ -21,7 +20,7 @@ import OrderStatusLine from '../../component/OrderSts';
 import {useNavigation} from '@react-navigation/native';
 import ScreenNames from '../../constants/Screens';
 import {useDispatch, useSelector} from 'react-redux';
-import {removeProduct} from '../../redux/slice/cartSlice';
+import {addProduct, removeProduct} from '../../redux/slice/cartSlice';
 import {UseAuth} from '../../context/AuthContext';
 import {showMessage} from 'react-native-flash-message';
 import {SCREEN_HEIGHT} from '../../styles/Size';
@@ -44,7 +43,7 @@ const Carts = () => {
 
   const navigation = useNavigation();
 
-  const getCartApi = apis.baseUrl + apis.getCart;
+  const getCartApi = apis.getCart;
 
   const [cartData, setCartData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -59,6 +58,7 @@ const Carts = () => {
       });
       if (res?.data?.code === 200) {
         setCartData(res?.data?.cartItems);
+        dispatch(addProduct(res?.data?.cartItems));
 
         setPriceData({
           totalPrice: res?.data?.totalPrice,
@@ -272,20 +272,11 @@ const Carts = () => {
         <Cmnhdr2 backIcon title="Cart" />
         <ScrollView style={{paddingBottom: 10, marginBottom: 60}}>
           <OrderStatusLine status="Address" />
-          {address ? (
+          {address?.length > 0 && (
             <View style={styles.address}>
               <Text style={styles.addressText}>
                 Deliver to :
                 {`${address[0]?.area},${address[0]?.city},${address[0]?.landmark},${address[0]?.state},`}
-              </Text>
-              <TouchableOpacity style={styles.addressChange}>
-                <Text style={styles.addressTextChange}>Change</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View style={styles.address}>
-              <Text style={styles.addressText}>
-                Deliver to : Shivani Patil, 585102 Plot no 92 corporation layout
               </Text>
               <TouchableOpacity style={styles.addressChange}>
                 <Text style={styles.addressTextChange}>Change</Text>
@@ -327,6 +318,11 @@ const Carts = () => {
 export default Carts;
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   address: {
     flex: 1,
     backgroundColor: Color.black,

@@ -29,6 +29,7 @@ import {addAddress} from '../../redux/slice/addresSlice';
 const MainHome = props => {
   const auth = UseAuth();
   const dispatch = useDispatch();
+
   const selector = useSelector(state => state);
 
   // *********************************State's Call **********************************
@@ -50,6 +51,9 @@ const MainHome = props => {
         const customerAddresses = user.data.customer_data.customer_addresses;
 
         setIsuser(true);
+        console.log('====================================');
+        // console.log();
+        console.log('====================================');
         setUserDetail(customerData);
         setUserAddress(customerAddresses);
 
@@ -71,7 +75,6 @@ const MainHome = props => {
   useEffect(() => {
     getUserDetail();
   }, [getUserDetail]);
-  // console.log(selector, 'proldie');
 
   const navigation = useNavigation();
 

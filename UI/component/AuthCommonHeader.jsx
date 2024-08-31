@@ -14,12 +14,15 @@ const {height, width} = Dimensions.get('window');
 
 const AuthCommonHeader = props => {
   const {backIcon} = props;
+  // console.log('====================================');
+  // console.log(props, 'props');
+  // console.log('====================================');
   return (
     <View style={styles.header}>
       <View style={styles.IMG}>
-        <TouchableOpacity onPress={props.onPress}>
+        {/* <TouchableOpacity>
           <Icon name="arrow-back" style={{fontSize: 25}} />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
       <View style={styles.cmnlogo}>
         <Image

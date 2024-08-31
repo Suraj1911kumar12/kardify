@@ -22,15 +22,16 @@ import {apis} from '../../utils/api';
 import {SCREEN_HEIGHT} from '../../styles/Size';
 import {UseAuth} from '../../context/AuthContext';
 import {showMessage} from 'react-native-flash-message';
+import {useSelector} from 'react-redux';
 
 const {width} = Dimensions.get('screen');
 
 const Products = props => {
   const auth = UseAuth();
-  console.log(auth.token);
+
+  const selector = useSelector(state => state);
 
   const param = props.route.params;
-  console.log(param);
 
   const navigation = useNavigation();
   const [products, setProducts] = useState([]);
@@ -83,6 +84,33 @@ const Products = props => {
       console.error(error);
     }
   };
+  const removeFromWishList = async id => {
+    try {
+      const res = await axios.post(
+        `/remove-from-wishlist`,
+        {product_id: id},
+        {headers: {Authorization: auth.token}},
+      );
+      if (res?.data?.code === 200) {
+        showMessage({
+          message: res?.data?.message || 'Removed from wishlist',
+          type: 'success',
+        });
+      } else {
+        showMessage({
+          message: res?.data?.message || 'Error removing from wishlist',
+          type: 'danger',
+        });
+      }
+    } catch (error) {
+      showMessage({
+        message:
+          error.response.data?.message ||
+          'An error occurred while removing from wishlist.',
+        type: 'danger',
+      });
+    }
+  };
 
   const handleImageLoadStart = id => {
     setImageLoading(prevState => ({
@@ -107,6 +135,15 @@ const Products = props => {
   );
 
   const renderItem = ({item}) => {
+    // Check if the item is in the wishlist
+    const isInWishlist = selector.wishList.some(
+      wishlistItem => wishlistItem?.product_id === item.id,
+    );
+
+    // console.log('====================================');
+    // console.log(selector.wishList, item?.id, 'itemdsf');
+    // console.log('====================================');
+
     return (
       <TouchableOpacity
         onPress={() =>
@@ -152,19 +189,91 @@ const Products = props => {
             </View>
           </View>
         )}
-        <TouchableOpacity
-          onPress={() => addWishList(item?.id)}
-          style={{
-            position: 'absolute',
-            top: 5,
-            right: 5,
-            padding: 6,
-          }}>
-          <Icon name="heart-outlined" size={20} color={Color.black} />
-        </TouchableOpacity>
+        {auth.token && (
+          <TouchableOpacity
+            onPress={() => {
+              if (isInWishlist) {
+                removeFromWishList(item?.id);
+              } else {
+                addWishList(item?.id);
+              }
+            }}
+            style={{
+              position: 'absolute',
+              top: 5,
+              right: 5,
+              padding: 6,
+            }}>
+            <Icon
+              name={isInWishlist ? 'heart' : 'heart-outlined'}
+              size={20}
+              color={isInWishlist ? Color.red : Color.black}
+            />
+          </TouchableOpacity>
+        )}
       </TouchableOpacity>
     );
   };
+
+  // const renderItem = ({item}) => {
+  //   return (
+  //     <TouchableOpacity
+  //       onPress={() =>
+  //         navigation.navigate(ScreenNames.productdetails, {
+  //           id: item?.id,
+  //         })
+  //       }
+  //       style={styles.card}>
+  //       {imageLoading[item?.id] && renderSkeletonLoader()}
+  //       <Image
+  //         source={{uri: apis.baseImgUrl + item?.images[0]?.image_url}}
+  //         style={[styles.image]}
+  //         resizeMode="cover"
+  //         // onLoadStart={() => handleImageLoadStart(item?.id)}
+  //         // onLoadEnd={() => handleImageLoadEnd(item?.id)}
+  //       />
+  //       {!imageLoading[item?.id] && (
+  //         <View style={{gap: 6, padding: 6}}>
+  //           <Text
+  //             style={{color: Color.white}}
+  //             numberOfLines={1} // Limits the text to one line and adds an ellipsis if it's too long
+  //             ellipsizeMode="tail" // Adds ellipsis at the end if the text overflows
+  //           >
+  //             {item?.product_name}
+  //           </Text>
+  //           <Text style={{color: Color.white}}>
+  //             <Icon name="star" size={20} color={Color.yellow} /> 4.9
+  //           </Text>
+  //           <View style={{flexDirection: 'row', gap: 5}}>
+  //             <Text style={{color: Color.white}}>
+  //               ₹
+  //               {item?.default_price -
+  //                 (item?.default_price * item?.discount) / 100}
+  //             </Text>
+  //             <Text
+  //               style={{
+  //                 color: Color.grey,
+  //                 opacity: 0.5,
+  //                 textDecorationLine: 'line-through',
+  //               }}>
+  //               ₹{item?.default_price}
+  //             </Text>
+  //           </View>
+  //         </View>
+  //       )}
+  //       <TouchableOpacity
+  //         onPress={() => addWishList(item?.id)}
+  //         style={{
+  //           position: 'absolute',
+  //           top: 5,
+  //           right: 5,
+  //           padding: 6,
+  //         }}>
+  //         <Icon name="heart-outlined" size={20} color={Color.black} />
+  //       </TouchableOpacity>
+  //     </TouchableOpacity>
+  //   );
+  // };
   const renderNoData = () => {
     return <Text>No Data</Text>;
   };
