@@ -2,16 +2,16 @@ import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import React, {useState} from 'react';
 import {Color} from '../styles/Color';
 
-const CustomTab = ({selected, setSelected}) => {
+const CustomTab = ({selected, setSelected, cData, pData}) => {
   const tabsVal = [
     {
       id: 1,
-      name: 'Current Orders',
+      name: `Current Orders (${cData && cData})`,
       value: 0,
     },
     {
       id: 2,
-      name: 'Past Orders',
+      name: `Past Orders (${pData && pData})`,
       value: 1,
     },
   ];
@@ -45,13 +45,14 @@ export default CustomTab;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    maxHeight: 60,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: Color.white,
     margin: 20,
-    borderRadius: 25,
-    minHeight: 45,
+    borderRadius: 50,
+    minHeight: 60,
     padding: 10,
   },
   tabs: {
@@ -62,6 +63,7 @@ const styles = StyleSheet.create({
     color: Color.white,
     padding: 5,
     borderRadius: 25,
+    paddingTop: 10,
   },
   text: {},
 });

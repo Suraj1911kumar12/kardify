@@ -1,4 +1,8 @@
+import 'react-native-gesture-handler';
+import 'react-native-reanimated';
+
 import Route from './UI/Routes/Route';
+
 import {Provider} from 'react-redux';
 import {useEffect} from 'react';
 import SplashScreen from 'react-native-splash-screen';

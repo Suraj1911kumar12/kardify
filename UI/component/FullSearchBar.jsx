@@ -10,6 +10,7 @@ import {
   SafeAreaView,
   ImageBackground,
   Pressable,
+  Image,
 } from 'react-native';
 import React, {useCallback, useEffect, useState} from 'react';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -18,6 +19,7 @@ import axios from '../../axios';
 import Cmnhdr2 from './Cmnheader2';
 import {useNavigation} from '@react-navigation/native';
 import ScreenNames from '../constants/Screens';
+import {apis} from '../utils/api';
 
 const {width, height} = Dimensions.get('window');
 
@@ -34,7 +36,7 @@ const FullSearchBar = () => {
       const resp = await axios.get('/get-products-customer');
       if (resp.data.code === 200) {
         setSearchData(resp.data.products);
-        setFilteredData(resp.data.products); // Set initial filtered data
+        // setFilteredData(resp.data.products); // Set initial filtered data
       }
     } catch (error) {
       console.log(error);
@@ -53,7 +55,7 @@ const FullSearchBar = () => {
       );
       setFilteredData(newData);
     } else {
-      setFilteredData(searchData);
+      setFilteredData([]);
     }
   };
 
@@ -124,6 +126,20 @@ const FullSearchBar = () => {
                         id: item?.id,
                       })
                     }>
+                    <View style={styles.img}>
+                      <Image
+                        source={{
+                          uri: apis.baseImgUrl + item?.images[0]?.image_url,
+                        }}
+                        style={[styles.image]}
+                        resizeMode="cover"
+                      />
+                    </View>
+                    <View style={styles.txt}>
+                      {/* <Text style={styles.itemSubText}>
+                        {item.brand?.brand_name}
+                      </Text> */}
+                    </View>
                     <Text style={styles.itemText}>{item.product_name}</Text>
                   </TouchableOpacity>
                 )}
@@ -171,11 +187,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   listItem: {
+    flex: 1,
     padding: 10,
     borderColor: '#ddd',
     // borderWidth: 10,
+    flexDirection: 'row',
   },
   itemText: {
     color: '#fff',
+    width: 200,
+  },
+  img: {
+    // flex: 1,
+    marginRight: 10,
+  },
+  image: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
   },
 });

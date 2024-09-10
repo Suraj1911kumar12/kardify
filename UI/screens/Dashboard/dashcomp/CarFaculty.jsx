@@ -30,13 +30,17 @@ const CarFacility = props => {
   useEffect(() => {
     getOffers();
   }, [getOffers]);
-  const arr = [10, 20];
 
   const renderItem = useCallback(
     ({item}) => (
       <TouchableOpacity
         style={styles.carair}
-        onPress={() => navigation.navigate(ScreenNames.productsList, item?.id)}>
+        onPress={() =>
+          navigation.navigate(
+            ScreenNames.productsList,
+            `product_brand_id=${item?.id}`,
+          )
+        }>
         <View style={styles.imageContainer}>
           <Image
             source={{uri: apis.baseImgUrl + item?.image}}

@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useCallback} from 'react';
+import React, {useEffect, useCallback} from 'react';
 import {
   FlatList,
   ImageBackground,
@@ -9,7 +9,6 @@ import {
   View,
   TouchableOpacity,
   Image,
-  ActivityIndicator,
 } from 'react-native';
 import Cmnhdr2 from '../../component/Cmnheader2';
 import axios from '../../../axios';
@@ -19,50 +18,32 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import {Color} from '../../styles/Color';
 import {useNavigation} from '@react-navigation/native';
 import {useDispatch, useSelector} from 'react-redux';
-import {addWishlist} from '../../redux/slice/wishlist';
+import {getWhishList} from '../../redux/slice/wishlist';
 import {SCREEN_HEIGHT} from '../../styles/Size';
+import ScreenNames from '../../constants/Screens';
+import CustomButton from '../../component/CustomButton';
+import {apis} from '../../utils/api';
 
 const WishList = () => {
   const navigation = useNavigation();
-  const [wishlist, setWishList] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [imageLoading, setImageLoading] = useState({});
   const dispatch = useDispatch();
-  const selector = useSelector(state => state);
+  const selector = useSelector(state => state.wishList);
   const auth = UseAuth();
+  // console.log('====================================');
+  // console.log(auth.token);
+  // console.log('====================================');
 
-  const getWishList = async () => {
-    try {
-      const res = await axios.get('/get-all-wishlists', {
-        headers: {
-          Authorization: auth.token,
-        },
-      });
-      if (res?.data?.code === 200) {
-        setWishList(res?.data?.data);
-        dispatch(addWishlist(res?.data?.data));
-      } else {
-        showMessage({
-          message: res?.data?.message || 'No wishlist found.',
-          type: 'danger',
-        });
-      }
-    } catch (error) {
-      console.log('Error fetching wishlist:', error);
+  useEffect(() => {
+    if (!auth.token) {
+      navigation.navigate(ScreenNames.LoginViaProtect);
       showMessage({
-        message: 'Error fetching wishlist.',
+        message: 'Please log in to access this screen.',
         type: 'danger',
       });
-    } finally {
-      setLoading(false);
+    } else {
+      dispatch(getWhishList(auth.token));
     }
-  };
-  useEffect(() => {
-    getWishList();
-    console.log('====================================');
-    console.log(wishlist[0]?.product_id, wishlist[1]?.product_id, 'wish');
-    console.log('====================================');
-  }, [auth.token]);
+  }, [auth.token, dispatch, navigation]);
 
   const removeFromWishList = useCallback(
     async id => {
@@ -73,10 +54,7 @@ const WishList = () => {
           {headers: {Authorization: auth.token}},
         );
         if (res?.data?.code === 200) {
-          setWishList(prevWishlist =>
-            prevWishlist.filter(item => item.id !== id),
-          );
-          getWishList();
+          dispatch(getWhishList(auth.token)); // Refresh wishlist
           showMessage({
             message: res?.data?.message || 'Removed from wishlist',
             type: 'success',
@@ -95,18 +73,19 @@ const WishList = () => {
         });
       }
     },
-    [auth.token],
+    [auth.token, dispatch],
   );
 
   const handleImageLoadStart = id => {
-    setImageLoading(prev => ({...prev, [id]: true}));
+    // Handling image load start can be kept or removed as per your need
   };
 
   const handleImageLoadEnd = id => {
-    setImageLoading(prev => ({...prev, [id]: false}));
+    // Handling image load end can be kept or removed as per your need
   };
+  const renderItem = ({item, index}) => {
+    const isLastItem = index === selector.data.length - 1;
 
-  const renderItem = ({item}) => {
     return (
       <TouchableOpacity
         accessible={true}
@@ -116,24 +95,26 @@ const WishList = () => {
             id: item?.product?.id,
           })
         }
-        style={styles.card}>
+        style={[
+          styles.card,
+          isLastItem && styles.lastCard, // Optional style if needed
+          selector.data.length === 1 && styles.fullWidthCard, // Add a style for single item
+        ]}>
         <Image
-          //   source={{
-          //     uri: `${apis.baseImgUrl}${item?.product?.images[0]?.image_url}`,
-          //   }}
+          source={{uri: apis.baseImgUrl + item?.product?.images[0]?.image_url}}
+          style={[styles.image]}
+          resizeMode="cover"
+          // onLoadStart={() => handleImageLoadStart(item?.id)}
+          // onLoadEnd={() => handleImageLoadEnd(item?.id)}
+        />
+        {/* <Image
           source={require('../../../assets/images/profile/profileimg.png')}
           style={styles.image}
           resizeMode="cover"
           onLoadStart={() => handleImageLoadStart(item?.product?.id)}
           onLoadEnd={() => handleImageLoadEnd(item?.product?.id)}
-        />
-        {imageLoading[item?.product?.id] && (
-          <ActivityIndicator
-            style={styles.imageLoader}
-            size="small"
-            color={Color.white}
-          />
-        )}
+        /> */}
+
         <View style={{gap: 6, padding: 6}}>
           <Text style={{color: 'white'}} numberOfLines={1} ellipsizeMode="tail">
             {item?.product?.product_name}
@@ -144,8 +125,11 @@ const WishList = () => {
           <View style={{flexDirection: 'row', gap: 5}}>
             <Text style={{color: 'white'}}>
               ₹
-              {item?.product?.default_price -
-                (item?.product?.default_price * item?.product?.discount) / 100}
+              {item?.product?.discount_type === 'amount'
+                ? item?.product?.default_price - item?.product?.discount
+                : item?.product?.default_price -
+                  (item?.product?.default_price * item?.product?.discount) /
+                    100}
             </Text>
             <Text
               style={{
@@ -173,6 +157,69 @@ const WishList = () => {
     );
   };
 
+  // const renderItem = ({item, index}) => {
+  //   const isLastItem = index === selector.data.length - 1;
+
+  //   return (
+  //     <TouchableOpacity
+  //       accessible={true}
+  //       accessibilityLabel={`View details for ${item?.product?.product_name}`}
+  //       onPress={() =>
+  //         navigation.navigate('ProductDetails', {
+  //           id: item?.product?.id,
+  //         })
+  //       }
+  //       style={[styles.card, isLastItem && styles.lastCard]}>
+  //       <Image
+  //         source={require('../../../assets/images/profile/profileimg.png')}
+  //         style={styles.image}
+  //         resizeMode="cover"
+  //         onLoadStart={() => handleImageLoadStart(item?.product?.id)}
+  //         onLoadEnd={() => handleImageLoadEnd(item?.product?.id)}
+  //       />
+
+  //       <View style={{gap: 6, padding: 6}}>
+  //         <Text style={{color: 'white'}} numberOfLines={1} ellipsizeMode="tail">
+  //           {item?.product?.product_name}
+  //         </Text>
+  //         <Text style={{color: 'white'}}>
+  //           <Icon name="star" size={20} color="yellow" /> 4.9
+  //         </Text>
+  //         <View style={{flexDirection: 'row', gap: 5}}>
+  //           <Text style={{color: 'white'}}>
+  //             ₹
+  //             {item?.product?.discount_type === 'amount'
+  //               ? item?.product?.default_price - item?.product?.discount
+  //               : item?.product?.default_price -
+  //                 (item?.product?.default_price * item?.product?.discount) /
+  //                   100}
+  //           </Text>
+  //           <Text
+  //             style={{
+  //               color: 'grey',
+  //               opacity: 0.5,
+  //               textDecorationLine: 'line-through',
+  //             }}>
+  //             ₹{item?.product?.default_price}
+  //           </Text>
+  //         </View>
+  //       </View>
+  //       <TouchableOpacity
+  //         accessible={true}
+  //         accessibilityLabel={`Remove ${item?.product?.product_name} from wishlist`}
+  //         onPress={() => removeFromWishList(item?.product_id)}
+  //         style={{
+  //           position: 'absolute',
+  //           top: 5,
+  //           right: 5,
+  //           padding: 6,
+  //         }}>
+  //         <Icon name="heart" size={20} color="red" />
+  //       </TouchableOpacity>
+  //     </TouchableOpacity>
+  //   );
+  // };
+
   const renderSkeletonLoader = () => (
     <View style={styles.skeletonContainer}>
       <View style={styles.skeletonImage} />
@@ -180,6 +227,43 @@ const WishList = () => {
       <View style={styles.skeletonTextSmall} />
     </View>
   );
+
+  if (!auth.token) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ImageBackground
+          source={require('../../../assets/images/homeBg.png')}
+          resizeMode="stretch"
+          style={styles.background}>
+          <Cmnhdr2 backIcon title="Wishlist" />
+          <View
+            style={{
+              flex: 1,
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}>
+            <Text
+              style={{color: Color.white, fontSize: 20, fontWeight: 'bold'}}>
+              No Product
+            </Text>
+          </View>
+          <View
+            style={{
+              flex: 1,
+              justifyContent: 'flex-end',
+              marginVertical: 10,
+            }}>
+            <CustomButton
+              title="Login"
+              onPressButton={() =>
+                navigation.navigate(ScreenNames.LoginViaProtect)
+              }
+            />
+          </View>
+        </ImageBackground>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -192,7 +276,7 @@ const WishList = () => {
           showsVerticalScrollIndicator={false}
           showsHorizontalScrollIndicator={false}
           style={{paddingBottom: 10}}>
-          {loading ? (
+          {selector?.loading ? (
             <FlatList
               data={Array(6).fill({})}
               renderItem={renderSkeletonLoader}
@@ -200,9 +284,9 @@ const WishList = () => {
               numColumns={2}
               contentContainerStyle={{padding: 10, gap: 2, marginBottom: 50}}
             />
-          ) : wishlist.length > 0 ? (
+          ) : selector?.data?.length > 0 ? (
             <FlatList
-              data={wishlist}
+              data={selector.data}
               renderItem={renderItem}
               keyExtractor={item => item?.product?.id?.toString()}
               numColumns={2}
@@ -226,7 +310,6 @@ const WishList = () => {
 };
 
 export default WishList;
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -242,45 +325,51 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
     gap: 8,
     position: 'relative',
+    // Default width for items
+    maxWidth: '48%', // Adjust this if needed
+  },
+  singleItem: {
+    // Style for single item
+    maxWidth: '100%',
+    marginHorizontal: 0, // Adjust as needed
   },
   image: {
     width: '100%',
-    height: 100,
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
+    height: 150,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
   },
   imageLoader: {
     position: 'absolute',
-    top: '50%',
-    left: '50%',
-    marginLeft: -10,
-    marginTop: -10,
+    alignSelf: 'center',
+    top: '40%',
+  },
+  lastCard: {
+    marginBottom: 20,
   },
   skeletonContainer: {
     flex: 1,
-    backgroundColor: Color.grey,
-    borderRadius: 10,
-    margin: 4,
-    paddingBottom: 4,
-    alignItems: 'center',
-    gap: 8,
+    margin: 8,
+    padding: 16,
+    backgroundColor: Color.lightBlack,
+    borderRadius: 20,
   },
   skeletonImage: {
-    width: '100%',
-    height: 100,
-    backgroundColor: Color.darkGrey,
+    height: 150,
+    backgroundColor: '#444',
     borderRadius: 10,
   },
   skeletonText: {
-    width: '80%',
     height: 20,
-    backgroundColor: Color.darkGrey,
-    borderRadius: 5,
+    marginTop: 8,
+    backgroundColor: '#444',
+    borderRadius: 10,
   },
   skeletonTextSmall: {
+    height: 14,
+    marginTop: 6,
+    backgroundColor: '#444',
+    borderRadius: 10,
     width: '50%',
-    height: 15,
-    backgroundColor: Color.darkGrey,
-    borderRadius: 5,
   },
 });

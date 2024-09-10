@@ -18,17 +18,27 @@ import {Color} from '../../styles/Color';
 import axios from '../../../axios';
 import {apis} from '../../utils/api';
 import RenderHTML from 'react-native-render-html';
-import {useDispatch, useSelector} from 'react-redux';
 import {UseAuth} from '../../context/AuthContext';
 import {showMessage} from 'react-native-flash-message';
 import {AirbnbRating} from 'react-native-ratings';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import ScreenNames from '../../constants/Screens';
+import {useDispatch, useSelector} from 'react-redux';
 import {addProduct} from '../../redux/slice/cartSlice';
+import Icon from 'react-native-vector-icons/Entypo';
+import {addWishList, getWhishList} from '../../redux/slice/wishlist';
+import Modal from 'react-native-modal';
+import BottomSheetModal from '../../component/BottomSheetModal';
 
 const ProductDetails = ({route, navigation}) => {
+  const [openSheetModal, setOpenSheetModal] = useState(false);
+  const selector = useSelector(state => state);
   const auth = UseAuth();
+  const {token} = auth;
   const {id} = route.params;
-
   const {width} = useWindowDimensions();
+  const dispatch = useDispatch();
+  const [isWish, setisWish] = useState([]);
 
   const [selectedAttribute, setSelectedAttribute] = useState(null); // State to store the selected attribute
   const [attributes, setAttributes] = useState([]); // State to store attribute options
@@ -43,7 +53,6 @@ const ProductDetails = ({route, navigation}) => {
     combination_id: '',
     quantity: '',
   });
-  const dispatch = useDispatch();
 
   const getProductDetails = useCallback(async () => {
     try {
@@ -78,19 +87,6 @@ const ProductDetails = ({route, navigation}) => {
       setLoading(false); // Set loading to false once data is fetched
     }
   }, []);
-
-  const addToCart = product => {
-    try {
-      // addCartApiData(product?.id, selectedAttribute?.id, product?.quantity);
-      dispatch(addProduct(product));
-    } catch (error) {
-      showMessage({
-        message: error.message,
-        type: 'danger',
-      });
-    }
-  };
-
   const addCartApiData = async (prId, comId, qunt) => {
     try {
       const response = await axios.post(
@@ -106,12 +102,24 @@ const ProductDetails = ({route, navigation}) => {
           },
         },
       );
+      console.log('====================================');
+      console.log(response.data.code, 'response.data.code');
+      console.log('====================================');
 
-      if (response.data.code === 200) {
+      if (response.data.code === 201) {
+        // Extract the product data from the response
         showMessage({
-          message: 'Product added to cart!',
+          message: response?.data?.message || 'Product added to cart!',
           type: 'success',
         });
+      } else if (response.data.code === 401) {
+        showMessage({
+          message:
+            response?.data?.message || 'Please login to add items to the cart!',
+          type: 'warning',
+        });
+        AsyncStorage.removeItem('token');
+        navigation.navigate(ScreenNames.LoginScreen);
       } else {
         showMessage({
           message: response.data.message,
@@ -126,13 +134,117 @@ const ProductDetails = ({route, navigation}) => {
       });
     }
   };
+  const closeTrackOrderModal = () => {
+    setOpenSheetModal(false);
+  };
+  useEffect(() => {
+    setisWish(selector?.wishList?.data);
+  }, [isWish?.length, dispatch, selector?.wishList?.data]);
+  const addToCart = async product => {
+    try {
+      if (token) {
+        // If token is available, call the API function to add the product to the cart
+        await addCartApiData(
+          product.id,
+          selectedAttribute?.id,
+          product.quantity,
+        );
+      } else {
+        // If token is not available, proceed with the local storage function
+        // Get the current cart from AsyncStorage
+        const existingCart = await AsyncStorage.getItem('cart');
+        let cart = [];
+
+        // If there is an existing cart, parse it
+        if (existingCart !== null) {
+          cart = JSON.parse(existingCart);
+        }
+
+        // Check if the product is already in the cart
+        const existingProduct = cart.find(item => item.id === product.id);
+        if (existingProduct) {
+          // Optionally, you can update the quantity or notify the user that the product is already in the cart
+          showMessage({
+            message: 'Product is already in the cart',
+            type: 'warning',
+          });
+        } else {
+          // Add the new product to the cart
+          cart.push(product);
+
+          // Update Redux store with the new product
+          dispatch(addProduct(product));
+
+          showMessage({
+            message: 'Product added to cart! with datA',
+            type: 'success',
+          });
+        }
+        await AsyncStorage.setItem('cart', JSON.stringify(cart));
+      }
+
+      // Save the updated cart back to AsyncStorage
+    } catch (error) {
+      console.error('Failed to add product to cart:', error);
+      showMessage({
+        message: 'Failed to add product to cart. Please try again later.',
+        type: 'danger',
+      });
+    }
+  };
 
   useEffect(() => {
     getProductDetails();
   }, []);
+  const addWishListProduct = async id => {
+    const cred = {
+      token: auth.token,
+      id: id,
+    };
 
-  const addedItem = useSelector(state => state);
-  console.log(addedItem?.item, 'addeditem');
+    try {
+      // Dispatch addWishList and wait for it to complete
+      await dispatch(addWishList(cred)).unwrap();
+
+      // Dispatch getWhishList and wait for it to complete
+      await dispatch(getWhishList(auth.token)).unwrap();
+
+      // Optionally handle success here, e.g., show a success message
+    } catch (error) {
+      console.error(error);
+      // Optionally handle the error here, e.g., show an error message
+    }
+  };
+  const removeFromWishList = useCallback(
+    async id => {
+      try {
+        const res = await axios.post(
+          `/remove-from-wishlist`,
+          {product_id: id},
+          {headers: {Authorization: auth.token}},
+        );
+        if (res?.data?.code === 200) {
+          dispatch(getWhishList(auth.token)); // Refresh wishlist
+          showMessage({
+            message: res?.data?.message || 'Removed from wishlist',
+            type: 'success',
+          });
+        } else {
+          showMessage({
+            message: res?.data?.message || 'Error removing from wishlist',
+            type: 'danger',
+          });
+        }
+      } catch (error) {
+        console.error(error);
+        showMessage({
+          message: 'An error occurred while removing from wishlist.',
+          type: 'danger',
+        });
+      }
+    },
+    [auth.token, dispatch],
+  );
 
   const handleScroll = event => {
     const offsetX = event.nativeEvent.contentOffset.x;
@@ -155,7 +267,11 @@ const ProductDetails = ({route, navigation}) => {
       if (textLength > 15) return 24;
       return 28;
     };
+
     const isNameTooLong = item?.product_name.length > 20;
+    const isInWishlist =
+      Array.isArray(isWish) &&
+      isWish?.some(wishItem => wishItem?.product_id === item.id);
 
     return (
       <View style={{flex: 1, minHeight: SCREEN_HEIGHT, padding: 10}}>
@@ -168,19 +284,17 @@ const ProductDetails = ({route, navigation}) => {
             showsHorizontalScrollIndicator={false}
             keyExtractor={image => image.id.toString()}
             renderItem={({item: image}) => (
-              <>
-                <Image
-                  style={{
-                    width: width - 40,
-                    height: 200,
-                    borderTopLeftRadius: 10,
-                    borderTopRightRadius: 10,
-                    borderWidth: 2,
-                  }}
-                  source={{uri: apis.baseImgUrl + image?.image_url}}
-                  resizeMode="contain"
-                />
-              </>
+              <Image
+                style={{
+                  width: width - 40,
+                  height: 200,
+                  borderTopLeftRadius: 10,
+                  borderTopRightRadius: 10,
+                  borderWidth: 2,
+                }}
+                source={{uri: apis.baseImgUrl + image?.image_url}}
+                resizeMode="contain"
+              />
             )}
             onScroll={handleScroll} // Track the scroll event
             ref={flatListRef} // Attach the reference
@@ -352,9 +466,11 @@ const ProductDetails = ({route, navigation}) => {
                         fontWeight: 'bold',
                         color: Color.white,
                       }}>
-                      ₹{' '}
-                      {item?.default_price -
-                        (item?.default_price * item?.discount) / 100}
+                      ₹
+                      {item?.discount_type === 'amount'
+                        ? item?.default_price - item?.discount
+                        : item?.default_price -
+                          (item?.default_price * item?.discount) / 100}
                     </Text>
                     {item?.discount && (
                       <>
@@ -371,7 +487,9 @@ const ProductDetails = ({route, navigation}) => {
                             fontSize: 12,
                             color: Color.grey,
                           }}>
-                          ({item?.discount}% Off)
+                          {item?.discount_type === 'amount'
+                            ? `( ₹${item?.discount} off )`
+                            : `(${item?.discount}% off)`}
                         </Text>
                       </>
                     )}
@@ -387,16 +505,6 @@ const ProductDetails = ({route, navigation}) => {
                     alignItems: 'flex-end',
                     marginTop: 4,
                   }}>
-                  <Text
-                    style={{
-                      fontSize: 24,
-                      fontWeight: 'bold',
-                      color: Color.white,
-                    }}>
-                    ₹{' '}
-                    {item?.default_price -
-                      (item?.default_price * item?.discount) / 100}
-                  </Text>
                   {item?.discount && (
                     <>
                       <Text
@@ -412,7 +520,9 @@ const ProductDetails = ({route, navigation}) => {
                           fontSize: 12,
                           color: Color.grey,
                         }}>
-                        ({item?.discount}% Off)
+                        {item?.discount_type === 'amount'
+                          ? `( ₹${item?.discount} off )`
+                          : `(${item?.discount}% off)`}
                       </Text>
                     </>
                   )}
@@ -438,26 +548,22 @@ const ProductDetails = ({route, navigation}) => {
               <Text style={{fontWeight: 'bold', color: Color.white}}>
                 Net Quantity:
               </Text>
+
               <Text style={{fontWeight: 'bold', color: Color.grey}}>
                 {item?.quantity}
               </Text>
             </View>
-            <View style={{flexDirection: 'row', gap: 5}}>
-              <Text style={{fontWeight: 'bold', color: Color.white}}>
-                warranty:
-              </Text>
-              <Text style={{fontWeight: 'bold', color: Color.grey}}>
-                {item?.warranty}
-              </Text>
-            </View>
-            {/* <View style={{flexDirection: 'row', gap: 5}}>
-            <Text style={{fontWeight: 'bold', color: Color.white}}>
-              warranty:
-            </Text>
-            <Text style={{fontWeight: 'bold', color: Color.grey}}>
-              {item?.warranty}
-            </Text>
-          </View> */}
+            {item?.warranty > 0 && (
+              <View style={{flexDirection: 'row', gap: 5}}>
+                <Text style={{fontWeight: 'bold', color: Color.white}}>
+                  warranty:
+                </Text>
+                <Text style={{fontWeight: 'bold', color: Color.grey}}>
+                  {item?.warranty}
+                </Text>
+              </View>
+            )}
+
             <Text style={{fontWeight: 'bold', color: Color.white}}>
               Description:{' '}
             </Text>
@@ -495,6 +601,34 @@ const ProductDetails = ({route, navigation}) => {
           /> */}
           </View>
         </View>
+        {/* {auth.token && ( */}
+        <TouchableOpacity
+          onPress={() => {
+            if (isInWishlist) {
+              removeFromWishList(item?.id);
+            } else {
+              addWishListProduct(item?.id);
+            }
+          }}
+          style={{
+            position: 'absolute',
+            top: 15,
+            right: 15,
+            padding: 6,
+            borderRadius: 50,
+            justifyContent: 'center',
+            alignItems: 'center',
+            elevation: 5,
+            shadowColor: '#000',
+            // backgroundColor: Color.yellow,
+          }}>
+          <Icon
+            name={isInWishlist ? 'heart' : 'heart-outlined'}
+            size={30}
+            color={isInWishlist ? Color.red : Color.black}
+          />
+        </TouchableOpacity>
+        {/* )} */}
       </View>
     );
   };
@@ -536,7 +670,7 @@ const ProductDetails = ({route, navigation}) => {
           <TouchableOpacity
             onPress={() => {
               // addItem(productDetail[0]);
-              addToCart();
+              addToCart(productDetail[0]);
             }} // Correctly passing the item
             style={[
               styles.button,
@@ -544,10 +678,29 @@ const ProductDetails = ({route, navigation}) => {
             ]}>
             <Text style={[styles.text]}>Add to Cart</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.button}>
+          <TouchableOpacity
+            onPress={() => {
+              if (token) {
+                setOpenSheetModal(true);
+                // addToCart(productDetail[0]);
+              } else {
+                navigation.navigate(ScreenNames.LoginViaProtect);
+                showMessage({
+                  message: 'Please login to proceed',
+                  type: 'warning',
+                });
+              }
+            }}
+            style={styles.button}>
             <Text style={[styles.text]}>Buy Now</Text>
           </TouchableOpacity>
         </View>
+        <BottomSheetModal
+          modalVisible={openSheetModal}
+          setModalVisible={setOpenSheetModal}
+          addToCart={addToCart}
+          productDetail={productDetail}
+        />
       </ImageBackground>
     </SafeAreaView>
   );
@@ -654,5 +807,72 @@ const styles = StyleSheet.create({
   },
   inactiveDot: {
     backgroundColor: Color.grey,
+  },
+  separator: {
+    width: 2,
+    backgroundColor: Color.white,
+  },
+  buttonContainer: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+  },
+  bottomSheetContent: {
+    backgroundColor: Color.lightBlack,
+    padding: 16,
+    height: SCREEN_HEIGHT * 0.2,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  sheetTitle: {
+    fontSize: 18,
+    color: Color.white,
+    marginBottom: 10,
+  },
+  sheetText: {
+    color: Color.white,
+    marginVertical: 5,
+  },
+  sheetButton: {
+    backgroundColor: Color.yellow,
+    padding: 10,
+    borderRadius: 50,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  sheetButtonText: {
+    color: Color.white,
+    fontSize: 16,
+  },
+  bottomSheetContent: {
+    backgroundColor: '#fff',
+    padding: 16,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  checkbox: {
+    marginRight: 10,
+  },
+  termsText: {
+    fontSize: 16,
+  },
+  sheetButton: {
+    padding: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  sheetButtonText: {
+    color: '#fff',
+    fontSize: 16,
   },
 });

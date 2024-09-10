@@ -1,18 +1,16 @@
 import {Linking, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import React from 'react';
-import CustomButton from '../../component/CustomButton';
 import {Color} from '../../styles/Color';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-// import AntDesign from 'react-native-vector-icons/AntDesign';
-
-import {SCREEN_WIDTH} from '../../styles/Size';
+import AntDesign from 'react-native-vector-icons/AntDesign';
+import Entypo from 'react-native-vector-icons/Entypo';
 
 const ContactUs = () => {
   const socialMedia = [
-    {name: 'facebook', url: 'https://www.facebook.com'},
-    {name: 'twitter', url: 'https://www.twitter.com'},
-    {name: 'instagram', url: 'https://www.instagram.com'},
-    {name: 'linkedin', url: 'https://www.linkedin.com'},
+    {name: 'facebook', url: 'https://www.facebook.com', type: Icon},
+    {name: 'twitter', url: 'https://www.twitter.com', type: AntDesign},
+    {name: 'instagram', url: 'https://www.instagram.com', type: AntDesign},
+    {name: 'linkedin', url: 'https://www.linkedin.com', type: Entypo},
   ];
 
   const openURL = url => {
@@ -38,14 +36,17 @@ const ContactUs = () => {
       <View style={{alignItems: 'center'}}>
         <Text style={styles.cnt}>Social Media Links</Text>
         <View style={{flexDirection: 'row'}}>
-          {socialMedia.map((social, index) => (
-            <TouchableOpacity
-              key={index}
-              style={styles.iconContainer}
-              onPress={() => openURL(social.url)}>
-              <Icon name={social.name} size={30} color="#fff" />
-            </TouchableOpacity>
-          ))}
+          {socialMedia.map((social, index) => {
+            const IconComponent = social.type; // Get the correct Icon component
+            return (
+              <TouchableOpacity
+                key={index}
+                style={styles.iconContainer}
+                onPress={() => openURL(social.url)}>
+                <IconComponent name={social.name} size={30} color="#fff" />
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </View>
     </View>
@@ -59,8 +60,8 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     // justifyContent: 'center',
-    gap:20,
-    paddingVertical:50,
+    gap: 20,
+    paddingVertical: 50,
     backgroundColor: Color.bgBlack,
     color: Color.white,
     padding: 10,
@@ -68,7 +69,7 @@ const styles = StyleSheet.create({
   cnt: {
     fontSize: 20,
     color: Color.white,
-    marginVertical:20,
+    marginVertical: 20,
     // fontWeight: 600,
   },
   git: {

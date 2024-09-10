@@ -1,35 +1,77 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   StyleSheet,
-  Image,
   TouchableOpacity,
   Text,
   Pressable,
 } from 'react-native';
+import axios from '../../axios';
 import {UseAuth} from '../context/AuthContext';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import MiIcon from 'react-native-vector-icons/MaterialIcons';
-// import EnIcon from 'react-native-vector-icons/Entypo';
 import {useNavigation} from '@react-navigation/native';
 import {Color} from '../styles/Color';
-import {useSelector} from 'react-redux';
 import ScreenNames from '../constants/Screens';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {apis} from '../utils/api';
+import {useDispatch, useSelector} from 'react-redux';
 
 const Cmnhdr2 = props => {
   const navigation = useNavigation();
   const {backIcon, title, cart} = props;
   const auth = UseAuth();
+  const [addedLength, setAddedLength] = useState(0);
+  const getCartApi = apis.getCart;
+  const dispatch = useDispatch();
+  const seletor = useSelector(state => state);
 
-  const items = useSelector(state => state);
+  const fetchCartData = async () => {
+    if (auth.token) {
+      try {
+        const res = await axios.get(getCartApi, {
+          headers: {
+            Authorization: auth.token,
+          },
+        });
+        if (res?.data?.code === 200) {
+          setAddedLength(res?.data?.cartItems?.length);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    } else {
+      try {
+        const data = await AsyncStorage.getItem('cart');
+        const cart = data ? JSON.parse(data) : [];
+        setAddedLength(cart.length || 0);
+      } catch (error) {
+        console.error('Failed to retrieve cart data:', error);
+      }
+    }
+  };
 
-  const addedLength = items?.item?.length;
+  useEffect(() => {
+    fetchCartData();
+    // Set up the interval to fetch data every 5 seconds
+    const intervalId = setInterval(() => {
+      fetchCartData();
+    }, 5000);
+
+    // Clear interval on component unmount
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [auth.token]);
 
   return (
     <View style={styles.header}>
       {backIcon ? (
         <View style={styles.firstView}>
-          <Pressable onPress={() => navigation.goBack()}>
+          <Pressable
+            onPress={() =>
+              navigation.goBack() || navigation.navigate(ScreenNames.Home)
+            }>
             <MiIcon
               name="keyboard-arrow-left"
               style={{fontSize: 30, color: Color.white}}
@@ -56,21 +98,19 @@ const Cmnhdr2 = props => {
             onPress={() => navigation.navigate(ScreenNames.carts)}
             style={styles.circleView}>
             <Icon name="cart" style={{fontSize: 20, color: Color.grey}} />
-            <View
-              style={{
-                position: 'absolute',
-                top: 0,
-                right: 10,
-                // backgroundColor: 'red',
-                zIndex: -1,
-              }}>
-              <Text style={{color: Color.white, zIndex: 2}}>{addedLength}</Text>
-            </View>
+            {addedLength > 0 && (
+              <View
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  right: 10,
+                }}>
+                <Text style={{color: Color.white}}>{addedLength}</Text>
+              </View>
+            )}
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity
-            // onPress={props.notification}
-            style={styles.circleView}>
+          <TouchableOpacity style={styles.circleView}>
             <Icon
               name="bell-ring-outline"
               style={{fontSize: 20, color: Color.grey}}
@@ -126,13 +166,5 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     gap: 5,
     flex: 1,
-  },
-  logo: {
-    height: 47,
-    width: 59,
-  },
-  img: {
-    height: 19,
-    width: 19,
   },
 });

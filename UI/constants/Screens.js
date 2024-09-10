@@ -100,10 +100,14 @@ const ScreenNames = {
   termsAndConditions: 'TermsAndConditions',
   termsofuse: 'TermsOfUse',
   contactus: 'ContactUs',
-  feedback:'Feedback',
-  purchaseGiftCard:'PurchaseGiftCard',
-  customerSupport:'CustomerSupport',
-  reward:'Rewards'
+  feedback: 'Feedback',
+  purchaseGiftCard: 'PurchaseGiftCard',
+  customerSupport: 'CustomerSupport',
+  reward: 'Rewards',
+  LoginViaProtect: 'LoginViaProtect',
+  PaymentSuccessful: 'PaymentSuccessful',
+  addressChange: 'addressChange',
+  profileChange: 'profileChange',
 };
 
 export default ScreenNames;

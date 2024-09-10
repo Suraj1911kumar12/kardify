@@ -1,3 +1,4 @@
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -6,22 +7,112 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Image,
+  Modal,
+  Button,
+  ActivityIndicator,
 } from 'react-native';
-
 import LinearGradient from 'react-native-linear-gradient';
-import React from 'react';
-import {SCREEN_HEIGHT, SCREEN_WIDTH} from '../../styles/Size';
-import ScreenNames from '../../constants/Screens';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Cmnhdr from '../../component/Cmnhdr';
 import {UseAuth} from '../../context/AuthContext';
 import {Color} from '../../styles/Color';
 import {useSelector} from 'react-redux';
+import {launchImageLibrary} from 'react-native-image-picker';
+import {SCREEN_HEIGHT, SCREEN_WIDTH} from '../../styles/Size';
+import {apis} from '../../utils/api';
+import ScreenNames from '../../constants/Screens';
+import {showMessage} from 'react-native-flash-message';
+import axios from '../../../axios';
+import LogoutConfirmationModal from '../ConfirmModal/ConfirmModal';
 
 const More = props => {
   const auth = UseAuth();
-
+  const {token} = auth;
+  const [isEditing, setIsEditing] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
   const userDetail = useSelector(state => state.profile);
+
+  const handleImagePick = async () => {
+    await launchImageLibrary({mediaType: 'photo', quality: 1}, response => {
+      if (response.didCancel) {
+        console.log('User cancelled image picker');
+      } else if (response.errorMessage) {
+        console.log('ImagePicker Error: ', response.errorMessage);
+      } else {
+        const source = {uri: response.assets[0].uri};
+        console.log('====================================');
+        console.log(source, 'sourec');
+        console.log('====================================');
+        setSelectedImage(source);
+        handleUploadImage();
+        // setModalVisible(true);
+      }
+    });
+  };
+  const handleUploadImage = async () => {
+    if (!selectedImage) {
+      showMessage({
+        message: 'No image selected',
+        type: 'warning',
+      });
+      return;
+    }
+
+    try {
+      const data = new FormData();
+      data.append('image', {
+        uri: selectedImage.uri,
+        name: 'image.jpg',
+        type: 'image/jpeg',
+      });
+
+      data.append('profile_img', selectedImage.uri); // Update as needed
+
+      const response = await axios.post(apis.edit_profile, data, {
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'multipart/form-data',
+          Authorization: token,
+        },
+      });
+
+      const result = response?.data;
+      if (result.code === 200) {
+        showMessage({
+          message: 'Image uploaded successfully',
+          type: 'success',
+        });
+      } else {
+        showMessage({
+          message: 'Failed to upload image',
+          type: 'warning',
+        });
+      }
+    } catch (error) {
+      console.log('Error while uploading image:', error);
+      showMessage({
+        message: 'Failed to upload image',
+        type: 'danger',
+      });
+    }
+  };
+  const [modalVisibleLogout, setModalVisibleLogout] = useState(false);
+
+  const handleLogOut = () => {
+    setModalVisibleLogout(true);
+  };
+
+  const handleConfirmLogout = () => {
+    setModalVisibleLogout(false);
+    auth.handleLogout();
+    // props.navigation.navigate(ScreenNames.LoginScreen);
+  };
+
+  const handleCancelLogout = () => {
+    setModalVisibleLogout(false);
+  };
 
   const arr = [
     {
@@ -78,12 +169,12 @@ const More = props => {
       icon: 'all-inbox',
       onPress: () => props.navigation.navigate(ScreenNames.feedback),
     },
-    {
-      id: 8,
-      name: 'Purchase Gift card',
-      icon: 'all-inbox',
-      onPress: () => props.navigation.navigate(ScreenNames.purchaseGiftCard),
-    },
+    // {
+    //   id: 8,
+    //   name: 'Purchase Gift card',
+    //   icon: 'all-inbox',
+    //   onPress: () => props.navigation.navigate(ScreenNames.purchaseGiftCard),
+    // },
 
     {
       id: 10,
@@ -104,6 +195,7 @@ const More = props => {
       onPress: () => props.navigation.navigate(ScreenNames.termsAndConditions),
     },
   ];
+
   return (
     <SafeAreaView style={{flex: 1}}>
       <LinearGradient
@@ -112,7 +204,6 @@ const More = props => {
         colors={['#353A40', '#16171B', '#424750', '#202326']}
         style={styles.linearGradient}>
         <Cmnhdr
-          // backIcon
           title="Profile"
           onPress={() => props.navigation.openDrawer()}
           notification={() =>
@@ -122,223 +213,210 @@ const More = props => {
 
         <ScrollView>
           <View style={styles.Morebdy}>
-            <View
-              style={{
-                gap: 4, //backgroundColor:'red',
-                justifyContent: 'center',
-                alignItems: 'center',
-              }}>
-              {userDetail?.profile_img?.length > 0 ? (
-                <Image
-                  source={{uri: apis.baseImgUrl + userDetail?.profile_img}}
-                />
-              ) : (
-                <Image
-                  source={require('../../../assets/images/profile/profileimg.png')}
-                />
-              )}
+            {token && (
               <View
-                style={{flexDirection: 'row', alignItems: 'center', gap: 5}}>
-                <Text
-                  style={{color: '#FFFFFF', fontSize: 18, fontWeight: '800'}}>
-                  {userDetail?.fullname || 'N/A'}
-                </Text>
-                <TouchableOpacity>
-                  <Icon
-                    name="edit-square"
-                    style={{fontSize: 15, color: Color.white}}
-                  />
-                </TouchableOpacity>
-              </View>
-            </View>
-            {arr.map((elem, index) => (
-              <TouchableOpacity
-                key={elem.id}
-                onPress={elem?.onPress}
-                // onPress={() => props.navigation.navigate(ScreenNames.stories)}
-              >
-                <View style={styles}>
-                  <View style={styles.stores}>
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 10,
-                      }}>
-                      <Icon
-                        name={elem.icon}
-                        style={{fontSize: 20, color: Color.grey}}
-                      />
-                      <Text style={{color: '#ffffff'}}>{elem.name}</Text>
-                    </View>
-                    <Icon
-                      name="arrow-forward-ios"
-                      style={{fontSize: 20, color: Color.white}}
+                onPress={() => setIsEditing(true)}
+                style={styles.profileContainer}>
+                <TouchableOpacity onPress={handleImagePick}>
+                  {selectedImage ? (
+                    <Image source={selectedImage} style={styles.profileImage} />
+                  ) : userDetail?.profile_img?.length > 0 ? (
+                    <Image
+                      source={{uri: apis.baseImgUrl + userDetail?.profile_img}}
+                      style={styles.profileImage}
                     />
+                  ) : (
+                    <Image
+                      source={require('../../../assets/images/profile/profileimg.png')}
+                      style={styles.profileImage}
+                    />
+                  )}
+                </TouchableOpacity>
+
+                <View style={styles.profileInfo}>
+                  <Text style={styles.profileName}>
+                    {userDetail?.fullname || 'N/A'}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() =>
+                      props.navigation.navigate(
+                        ScreenNames.profileChange,
+                        userDetail,
+                      )
+                    }>
+                    <Icon name="edit-square" style={styles.editIcon} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+
+            {/* {isEditing && (
+              <View style={styles.uploadContainer}>
+                <Button title="Choose Image" onPress={handleImagePick} />
+              </View>
+            )} */}
+
+            {!token && (
+              <TouchableOpacity
+                onPress={() =>
+                  props.navigation.navigate(ScreenNames.LoginScreen)
+                }>
+                <View style={styles.stores}>
+                  <View style={styles.storesContent}>
+                    <Icon name={'all-inbox'} style={styles.storeIcon} />
+                    <Text style={styles.storeText}>Login</Text>
                   </View>
+                  <Icon name="arrow-forward-ios" style={styles.arrowIcon} />
+                </View>
+              </TouchableOpacity>
+            )}
+
+            {arr.map(elem => (
+              <TouchableOpacity key={elem.id} onPress={elem.onPress}>
+                <View style={styles.stores}>
+                  <View style={styles.storesContent}>
+                    <Icon name={elem.icon} style={styles.storeIcon} />
+                    <Text style={styles.storeText}>{elem.name}</Text>
+                  </View>
+                  <Icon name="arrow-forward-ios" style={styles.arrowIcon} />
                 </View>
               </TouchableOpacity>
             ))}
-            <TouchableOpacity onPress={auth.handleLogout}>
-              <View style={styles}>
-                <View style={styles.stores}>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 10,
-                    }}>
-                    <Icon name={'all-inbox'} style={{fontSize: 20}} />
-                    <Text style={{color: '#ffffff'}}>Log Out</Text>
-                  </View>
-                  <Icon
-                    name="arrow-forward-ios"
-                    style={{fontSize: 20, color: Color.grey}}
-                  />
-                </View>
-              </View>
-            </TouchableOpacity>
 
-            {/* <TouchableOpacity
-              onPress={() =>
-                props.navigation.navigate(ScreenNames.installationpatner)
-              }>
-              <View style={styles}>
+            {token && (
+              <TouchableOpacity onPress={handleLogOut}>
                 <View style={styles.stores}>
-                  <Text style={{color: '#ffffff'}}>Installation</Text>
-                  <Icon name="arrow-forward-ios" style={{fontSize: 20}} />
+                  <View style={styles.storesContent}>
+                    <Icon name={'all-inbox'} style={styles.storeIcon} />
+                    <Text style={styles.storeText}>Log Out</Text>
+                  </View>
+                  <Icon name="arrow-forward-ios" style={styles.arrowIcon} />
                 </View>
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => props.navigation.navigate(ScreenNames.catalogs)}>
-              <View style={styles}>
-                <View style={styles.stores}>
-                  <Text style={{color: '#ffffff'}}>Catalog</Text>
-                  <Icon name="arrow-forward-ios" style={{fontSize: 20}} />
-                </View>
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() =>
-                props.navigation.navigate(ScreenNames.newdesignorproduct)
-              }>
-              <View style={styles}>
-                <View style={styles.stores}>
-                  <Text style={{color: '#ffffff'}}>New Designs</Text>
-                  <Icon name="arrow-forward-ios" style={{fontSize: 20}} />
-                </View>
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => props.navigation.navigate(ScreenNames.aboutus)}>
-              <View style={styles}>
-                <View style={styles.stores}>
-                  <Text style={{color: '#ffffff'}}>About us</Text>
-                  <Icon name="arrow-forward-ios" style={{fontSize: 20}} />
-                </View>
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => props.navigation.navigate(ScreenNames.contactus)}>
-              <View style={styles}>
-                <View style={styles.stores}>
-                  <Text style={{color: '#ffffff'}}>Contact us</Text>
-                  <Icon name="arrow-forward-ios" style={{fontSize: 20}} />
-                </View>
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() =>
-                props.navigation.navigate(ScreenNames.privacypolicy)
-              }>
-              <View style={styles}>
-                <View style={styles.stores}>
-                  <Text style={{color: '#ffffff'}}>Privacy policy</Text>
-                  <Icon name="arrow-forward-ios" style={{fontSize: 20}} />
-                </View>
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() =>
-                props.navigation.navigate(ScreenNames.returnpolicy)
-              }>
-              <View style={styles}>
-                <View style={styles.stores}>
-                  <Text style={{color: '#ffffff'}}>Return policy</Text>
-                  <Icon name="arrow-forward-ios" style={{fontSize: 20}} />
-                </View>
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() =>
-                props.navigation.navigate(ScreenNames.shippingpolicy)
-              }>
-              <View style={styles}>
-                <View style={styles.stores}>
-                  <Text style={{color: '#ffffff'}}>Shipping policy</Text>
-                  <Icon name="arrow-forward-ios" style={{fontSize: 20}} />
-                </View>
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => props.navigation.navigate(ScreenNames.termsofuse)}>
-              <View style={styles}>
-                <View style={styles.stores}>
-                  <Text style={{color: '#ffffff'}}>Terms of use</Text>
-                  <Icon name="arrow-forward-ios" style={{fontSize: 20}} />
-                </View>
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => props.navigation.navigate('Support')}>
-              <View style={styles}>
-                <View style={styles.stores}>
-                  <Text style={{color: '#ffffff'}}>Support</Text>
-                  <Icon name="arrow-forward-ios" style={{fontSize: 20}} />
-                </View>
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={auth.handleLogout}>
-              <View style={styles}>
-                <View style={styles.stores}>
-                  <Text style={{color: '#ffffff'}}>Log Out</Text>
-                  <Icon name="arrow-forward-ios" style={{fontSize: 20}} />
-                </View>
-              </View>
-            </TouchableOpacity> */}
+              </TouchableOpacity>
+            )}
           </View>
           <View style={{height: 150}} />
         </ScrollView>
+
+        {/* Modal for image upload */}
+        <Modal
+          visible={modalVisible}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setModalVisible(false)}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              {uploading ? (
+                <ActivityIndicator size="large" color="#0000ff" />
+              ) : (
+                <>
+                  <Image source={selectedImage} style={styles.modalImage} />
+                  <Button title="Upload Image" onPress={handleUploadImage} />
+                  <Button
+                    title="Cancel"
+                    onPress={() => setModalVisible(false)}
+                  />
+                </>
+              )}
+            </View>
+          </View>
+        </Modal>
+        <LogoutConfirmationModal
+          visible={modalVisibleLogout}
+          onConfirm={handleConfirmLogout}
+          onCancel={handleCancelLogout}
+        />
       </LinearGradient>
     </SafeAreaView>
   );
 };
 
 export default More;
+
 const styles = StyleSheet.create({
   linearGradient: {
     flex: 1,
   },
   Morebdy: {
-    // height:SCREEN_HEIGHT/1.6,
     width: SCREEN_WIDTH / 1.1,
     backgroundColor: '#1C1F22',
     alignSelf: 'center',
-    // marginTop:10,
     borderRadius: 10,
     flexDirection: 'column',
     paddingVertical: 15,
   },
+  profileContainer: {
+    marginTop: 20,
+    gap: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  profileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+  },
+  profileInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  profileName: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  editIcon: {
+    fontSize: 15,
+    color: Color.white,
+  },
+  uploadContainer: {
+    marginTop: 10,
+    alignItems: 'center',
+  },
   stores: {
     height: SCREEN_HEIGHT / 12,
     width: SCREEN_WIDTH / 1.25,
-    //backgroundColor:'red',
     alignSelf: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     borderBottomWidth: 1,
     borderColor: '#FFFFFF',
+  },
+  storesContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  storeIcon: {
+    fontSize: 20,
+    color: Color.grey,
+  },
+  storeText: {
+    color: '#ffffff',
+  },
+  arrowIcon: {
+    fontSize: 20,
+    color: Color.white,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    width: SCREEN_WIDTH / 1.2,
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalImage: {
+    width: 150,
+    height: 150,
+    borderRadius: 10,
+    marginBottom: 20,
   },
 });

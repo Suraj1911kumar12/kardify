@@ -14,7 +14,10 @@ const SigninTemplate = ({children}) => {
       <ImageBackground
         source={require('../../assets/images/homeBg.png')}
         resizeMode="stretch"
-        style={{height: '100%', width: '100%'}}>
+        style={{
+          height: '100%',
+          width: '100%',
+        }}>
         {children}
       </ImageBackground>
     </View>

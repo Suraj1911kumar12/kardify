@@ -63,6 +63,7 @@ export const AuthProvider = ({children}) => {
             type: 'success',
           });
           checkToken();
+          navigation.navigate(ScreenNames.Home);
         } else if (response.data.code === 400) {
           setIsLoading(false);
           showMessage({
@@ -258,6 +259,7 @@ export const AuthProvider = ({children}) => {
     setIsAuthenticated(false);
     setToken(null);
     await AsyncStorage.clear();
+    navigation.navigate(ScreenNames.LoginScreen);
   };
 
   return (

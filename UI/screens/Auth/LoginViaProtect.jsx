@@ -1,3 +1,4 @@
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -8,8 +9,8 @@ import {
   StyleSheet,
   StatusBar,
   ActivityIndicator,
+  BackHandler,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
 import LinearGradient from 'react-native-linear-gradient';
 import LoginHeader from '../../component/LoginHeader';
 import {SCREEN_HEIGHT, SCREEN_WIDTH} from '../../styles/Size';
@@ -22,19 +23,25 @@ import ContinueWith from '../../component/ContinueWith';
 import SigninTemplate from '../../component/SigninTemplate';
 import {Color} from '../../styles/Color';
 
-const Signin = props => {
+const LoginViaProtect = props => {
   const auth = UseAuth();
-  useEffect(() => {
-    if (auth.token) {
-      props.navigation.navigate(ScreenNames.Home);
-      return () => {
-        //cleanup code
-      };
-    }
-  }, [auth.token]);
   const [username, setUserName] = useState('');
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(true);
+
+  useEffect(() => {
+    const backAction = () => {
+      props.navigation.navigate(ScreenNames.Home); // Navigate to the main screen
+      return true; // Prevent default back press behavior
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction,
+    );
+
+    return () => backHandler.remove(); // Clean up the event listener
+  }, [props.navigation]);
 
   const handleLogin = () => {
     auth.login(username, password);
@@ -148,6 +155,8 @@ const Signin = props => {
   );
 };
 
+// ... (Rest of the component code, including InputField, SocialMediaLogin, and styles)
+
 const InputField = ({
   label,
   iconName,
@@ -204,8 +213,7 @@ const SocialMediaLogin = () => (
   </View>
 );
 
-export default Signin;
-
+export default LoginViaProtect;
 const styles = StyleSheet.create({
   container: {
     flex: 1,

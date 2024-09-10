@@ -25,12 +25,15 @@ import axios from '../../../axios';
 import {useDispatch, useSelector} from 'react-redux';
 import {addProfile} from '../../redux/slice/profileSlice';
 import {addAddress} from '../../redux/slice/addresSlice';
+import {addProduct, getProduct} from '../../redux/slice/cartSlice';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Banner from '../Banner/Banner';
 
 const MainHome = props => {
   const auth = UseAuth();
   const dispatch = useDispatch();
 
-  const selector = useSelector(state => state);
+  const selector = useSelector(state => state.item);
 
   // *********************************State's Call **********************************
   const [isLoading, setIsLoading] = useState(false);
@@ -92,6 +95,9 @@ const MainHome = props => {
         />
         <ScrollView>
           <FullSearchBar />
+          {/* ************************ banner ************************************ */}
+
+          <Banner />
 
           {/* ***********************************catelogue*********************************** */}
           <Catalogue />

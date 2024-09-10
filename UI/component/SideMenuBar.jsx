@@ -31,9 +31,7 @@ const SideMenuBar = props => {
               <Text style={styles.salertext}>Suraj Kumar</Text>
 
               <TouchableOpacity
-                onPress={() =>
-                  props.navigation.navigate(ScreenNames.myprofile)
-                }>
+                onPress={() => props.navigation.navigate(ScreenNames.more)}>
                 <View
                   style={{
                     flexDirection: 'row',
@@ -51,7 +49,7 @@ const SideMenuBar = props => {
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity
+        {/* <TouchableOpacity
           onPress={() => props.navigation.navigate(ScreenNames.selectaddress)}
           style={styles.Myprofiletextview}>
           <Text style={styles.Myprofiletext}>My Address</Text>
@@ -83,7 +81,7 @@ const SideMenuBar = props => {
           onPress={() => props.navigation.navigate(ScreenNames.ChangePassword)}
           style={styles.Myprofiletextview}>
           <Text style={styles.Myprofiletext}>Change Password</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         <TouchableOpacity onPress={auth.handleLogout}>
           <View style={styles.Myprofiletextview}>
@@ -139,7 +137,6 @@ const styles = StyleSheet.create({
     //fontFamily: fonts.PoppinsRegular,
   },
   Myprofiletextview: {
-    
     height: SCREEN_HEIGHT / 15,
     width: SCREEN_WIDTH / 1.5,
     // backgroundColor:"red",

@@ -63,19 +63,27 @@ const Testimonials = () => {
   );
 
   return (
-    <Swiper
-      style={styles.wrapper}
-      showsPagination={true}
-      paginationStyle={styles.paginationStyle}
-      dotStyle={styles.dotStyle}
-      activeDotStyle={styles.activeDotStyle}
-      contentContainerStyle={styles.contentContainer}>
-      {testimonials.map(item => (
-        <View key={item.id} style={styles.slide}>
-          {renderItem(item)}
-        </View>
-      ))}
-    </Swiper>
+    <View
+      style={{
+        paddingVertical: 40,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: Color.yellow,
+      }}>
+      <Swiper
+        style={styles.wrapper}
+        showsPagination={true}
+        paginationStyle={styles.paginationStyle}
+        dotStyle={styles.dotStyle}
+        activeDotStyle={styles.activeDotStyle}
+        contentContainerStyle={styles.contentContainer}>
+        {testimonials.map(item => (
+          <View key={item.id} style={styles.slide}>
+            {renderItem(item)}
+          </View>
+        ))}
+      </Swiper>
+    </View>
   );
 };
 
@@ -84,6 +92,9 @@ export default Testimonials;
 const styles = StyleSheet.create({
   wrapper: {
     height: SCREEN_HEIGHT / 4,
+    width: SCREEN_WIDTH / 1.25,
+    marginLeft: 10,
+    justifyContent: 'center', // Center vertically
   },
   slide: {
     width: SCREEN_WIDTH / 1.25,
@@ -102,6 +113,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     elevation: 8,
     padding: 10,
+    marginBottom: 10,
   },
   profileImage: {
     marginTop: 10,
@@ -135,6 +147,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#04A9F5',
   },
   contentContainer: {
-    alignItems: 'center', // Center horizontally in Swiper container
+    alignItems: 'center',
+    height: 'auto',
+    flex: 1, // Center horizontally in Swiper container
+    minHeight: 200,
   },
 });

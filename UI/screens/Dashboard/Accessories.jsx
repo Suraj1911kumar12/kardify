@@ -18,6 +18,9 @@ import Cmnhdr2 from '../../component/Cmnheader2';
 import {useNavigation} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome'; // Import your icon library
 import {UseAuth} from '../../context/AuthContext';
+import SkeletonLoader from '../../component/SkeletonLoader';
+
+import ScreenNames from '../../constants/Screens';
 
 const Accessories = props => {
   const navigation = useNavigation();
@@ -28,10 +31,8 @@ const Accessories = props => {
   const [loading, setLoading] = useState(true);
   const [selectedSubId, setSelectedSubId] = useState(null);
   const {params} = props.route;
+  const [showSuperSub, setShowSuperSub] = useState(false);
   const auth = UseAuth();
-  // console.log('====================================');
-  // console.log(auth.token);
-  // console.log('====================================');
 
   useEffect(() => {
     const getSubCategories = async () => {
@@ -55,61 +56,103 @@ const Accessories = props => {
   }, [params]);
 
   useEffect(() => {
-    if (subId) {
-      // console.log('====================================');
-      // console.log('id', subId, 'id');
-
-      // console.log('====================================');
-      const getSuperSubCategories = async () => {
-        try {
-          const res = await axios.get(
-            `/fetch-supersubcategories-customers?sub_category_id=${subId}`,
-          );
-          if (res?.data?.code === 200) {
-            setSuperSubCat(res?.data?.superSubcategories);
-          } else {
-            console.log(res.data.message);
-          }
-        } catch (error) {
-          console.error('Error fetching accessories:', error);
+    const getSuperSubCategories = async () => {
+      try {
+        const res = await axios.get(
+          `/fetch-supersubcategories-customers?category_id=${params}`,
+        );
+        if (res?.data?.code === 200) {
+          setSuperSubCat(res?.data?.superSubcategories);
+        } else {
+          console.log(res.data.message);
         }
-      };
-      getSuperSubCategories();
-    }
-  }, [subId]);
+      } catch (error) {
+        console.error('Error fetching accessories:', error);
+      }
+    };
+    getSuperSubCategories();
+  }, [params]);
 
   const handleSubCategoryPress = id => {
-    setSubId(id);
+    setSubId(prevSubId => (prevSubId === id ? null : id));
   };
 
   const renderItem = ({item}) => (
-    <View style={styles.card}>
-      <TouchableOpacity
-        onPress={() => handleSubCategoryPress(item?.id)}
-        style={styles.cardInner}>
-        <View style={{width: '20%'}}>
-          <Image
-            source={{uri: apis.baseImgUrl + item?.image_url}}
-            style={styles.image}
-          />
-        </View>
-        <View style={{width: '70%'}}>
-          <Text style={styles.text}>{item.sub_category_name}</Text>
-        </View>
-        <View style={{width: '10%', alignItems: 'center'}}>
-          <Icon name="chevron-down" size={20} color={Color.white} />
-        </View>
-      </TouchableOpacity>
-    </View>
-  );
-
-  if (loading) {
-    return (
-      <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color={Color.white} />
+    <>
+      <View style={styles.card}>
+        <TouchableOpacity
+          // onPress={() => handleSubCategoryPress(item?.id)}
+          onPress={() => {
+            const hasSubCategories =
+              superSubCat?.filter(filter => filter.sub_category_id === item?.id)
+                .length > 0;
+            if (hasSubCategories) {
+              handleSubCategoryPress(item?.id);
+            } else {
+              // Navigate to the product page
+              navigation.navigate(
+                ScreenNames.productsList,
+                `sub_category_id=${item?.id}`,
+              );
+            }
+          }}
+          style={styles.cardInner}>
+          <View style={{width: '20%'}}>
+            <Image
+              source={{uri: apis.baseImgUrl + item?.image_url}}
+              style={styles.image}
+            />
+          </View>
+          <View style={{width: '70%'}}>
+            <Text style={styles.text}>{item.sub_category_name}</Text>
+          </View>
+          {superSubCat?.filter(filter => filter.sub_category_id === item?.id)
+            .length > 0 ? (
+            <View style={{width: '10%', alignItems: 'flex-start'}}>
+              <Icon name="chevron-down" size={20} color={Color.white} />
+            </View>
+          ) : (
+            <></>
+          )}
+        </TouchableOpacity>
       </View>
-    );
-  }
+      {subId === item?.id ? (
+        <View style={{height: 'auto', padding: 10}}>
+          <View>
+            {superSubCat
+              ?.filter(filter => filter.sub_category_id === item?.id)
+              ?.map(e => (
+                <TouchableOpacity
+                  onPress={() =>
+                    navigation.navigate(
+                      ScreenNames.productsList,
+                      `super_sub_category_id=${e?.id}`,
+                    )
+                  }
+                  style={{
+                    gap: 5,
+                    flexDirection: 'row',
+                    backgroundColor: Color.lightBlack,
+                    width: '100%',
+                    padding: 10,
+                    borderRadius: 10,
+                    elevation: 5,
+                    marginVertical: 5,
+                    // justifyContent: 'center',
+                  }}
+                  key={e?.id}>
+                  <Text style={{fontSize: 16, color: Color.white}}>
+                    {e?.super_sub_category_name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+          </View>
+        </View>
+      ) : (
+        <></>
+      )}
+    </>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -119,18 +162,26 @@ const Accessories = props => {
         style={styles.background}>
         <Cmnhdr2 backIcon title="Accessories" />
         <ScrollView style={{paddingBottom: 10}}>
-          {subcategories.length > 0 ? (
-            <FlatList
-              data={subcategories}
-              renderItem={renderItem}
-              keyExtractor={item => item?.id?.toString()}
-              numColumns={1}
-              contentContainerStyle={styles.flatListContent}
-            />
+          {loading ? (
+            <SkeletonLoader />
           ) : (
-            <View style={styles.noStoriesContainer}>
-              <Text style={styles.noStoriesText}>No accessories available</Text>
-            </View>
+            <>
+              {subcategories.length > 0 ? (
+                <FlatList
+                  data={subcategories}
+                  renderItem={renderItem}
+                  keyExtractor={item => item?.id?.toString()}
+                  numColumns={1}
+                  contentContainerStyle={styles.flatListContent}
+                />
+              ) : (
+                <View style={styles.noStoriesContainer}>
+                  <Text style={styles.noStoriesText}>
+                    No accessories available
+                  </Text>
+                </View>
+              )}
+            </>
           )}
         </ScrollView>
       </ImageBackground>

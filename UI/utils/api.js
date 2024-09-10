@@ -24,4 +24,6 @@ export const apis = {
 
   // ------------------------Get Orders------------------
   getOrder: '/fetch-orders',
+  fakeOrder: '/abc',
+  edit_profile: '/edit-customer-details',
 };

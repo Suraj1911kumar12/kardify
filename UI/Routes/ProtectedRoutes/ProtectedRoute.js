@@ -1,7 +1,6 @@
 import React, {useEffect} from 'react';
 import {useNavigation} from '@react-navigation/native';
 import {showMessage} from 'react-native-flash-message';
-// import ScreenNames from '../utils/ScrRoutes/Screens';
 import {UseAuth} from '../../context/AuthContext';
 import ScreenNames from '../../constants/Screens';
 

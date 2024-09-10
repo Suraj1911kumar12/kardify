@@ -35,9 +35,9 @@ const Cmnhdr = props => {
         <View style={styles.firstView}>
           <View style={{gap: 2, color: Color.white}}>
             <Text style={{fontSize: 18, color: Color.white}}>
-              Welcome {userDetail?.fullname}
+              Welcome {auth.token && userDetail?.fullname}
             </Text>
-            {userAddress?.length > 0 && (
+            {auth.token && userAddress?.length > 0 && (
               <TouchableOpacity onPress={handleAddressPress}>
                 <View
                   style={{

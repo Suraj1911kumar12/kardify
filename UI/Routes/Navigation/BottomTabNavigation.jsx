@@ -4,13 +4,10 @@ import AntDesign from 'react-native-vector-icons/AntDesign';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
 import ScreenNames from '../../constants/Screens';
-
-const MainHome = React.lazy(() => import('../../screens/Dashboard/MainHome'));
-const More = React.lazy(() => import('../../screens/Dashboard/More'));
-
-const Stories = React.lazy(() => import('../../screens/Dashboard/Stories'));
-
-const Carts = React.lazy(() => import('../../screens/Dashboard/Carts'));
+import MainHome from '../../screens/Dashboard/MainHome';
+import Stories from '../../screens/Dashboard/Stories';
+import More from '../../screens/Dashboard/More';
+import MainCarts from '../../screens/Dashboard/MainCarts';
 
 const TabStack = createBottomTabNavigator();
 
@@ -79,7 +76,7 @@ const TabStackNavigator = () => {
       />
       <TabStack.Screen
         name={ScreenNames.carts}
-        component={Carts}
+        component={MainCarts}
         options={{
           title: 'Cart',
           tabBarIcon: ({focused, color, size}) => {

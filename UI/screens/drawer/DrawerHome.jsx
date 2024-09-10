@@ -1,8 +1,6 @@
 import {ImageBackground, StatusBar, StyleSheet, Text, View} from 'react-native';
 import React from 'react';
 import TabStackNavigator from '../../Routes/Navigation/BottomTabNavigation';
-import Cmnhdr from '../../component/Cmnhdr';
-import ScreenNames from '../../constants/Screens';
 
 const DrawerHome = props => {
   return (

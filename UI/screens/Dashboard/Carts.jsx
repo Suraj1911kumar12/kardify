@@ -9,7 +9,7 @@ import {
   FlatList,
   Image,
 } from 'react-native';
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import Cmnhdr2 from '../../component/Cmnheader2';
 import {Color} from '../../styles/Color';
 import axios from '../../../axios';
@@ -19,17 +19,20 @@ import Icon from 'react-native-vector-icons/AntDesign';
 import OrderStatusLine from '../../component/OrderSts';
 import {useNavigation} from '@react-navigation/native';
 import ScreenNames from '../../constants/Screens';
-import {useDispatch, useSelector} from 'react-redux';
-import {addProduct, removeProduct} from '../../redux/slice/cartSlice';
 import {UseAuth} from '../../context/AuthContext';
 import {showMessage} from 'react-native-flash-message';
 import {SCREEN_HEIGHT} from '../../styles/Size';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useSelector} from 'react-redux';
 
 const Carts = () => {
-  const auth = UseAuth();
+  const getCartApi = apis.getCart;
 
-  const addedData = useSelector(state => state);
-  const dispatch = useDispatch();
+  const auth = UseAuth();
+  const {token} = auth;
+  const [addedData, setAddedData] = useState([]);
+  const selector = useSelector(state => state);
+
   const address = addedData?.address;
 
   const [priceData, setPriceData] = useState({
@@ -39,18 +42,16 @@ const Carts = () => {
     tax: 0,
     finalPrice: 0,
   });
-  // console.log(address,'address');
 
   const navigation = useNavigation();
 
-  const getCartApi = apis.getCart;
-
   const [cartData, setCartData] = useState([]);
+  const [totalData, setTotalData] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  const getDataCart = useCallback(async () => {
-    setLoading(true);
+  const getDataCart = async () => {
     try {
+      setLoading(true);
       const res = await axios.get(getCartApi, {
         headers: {
           Authorization: auth.token,
@@ -58,8 +59,7 @@ const Carts = () => {
       });
       if (res?.data?.code === 200) {
         setCartData(res?.data?.cartItems);
-        dispatch(addProduct(res?.data?.cartItems));
-
+        setTotalData(res?.data?.cartItems?.length);
         setPriceData({
           totalPrice: res?.data?.totalPrice,
           totalMrp: res?.data?.totalNetPrice,
@@ -71,16 +71,66 @@ const Carts = () => {
     } finally {
       setLoading(false);
     }
-  }, [auth.token]);
+  };
+  const getCartWithoutToken = async () => {
+    setLoading(true);
+    try {
+      const data = await AsyncStorage.getItem('cart');
+      const cart = data ? JSON.parse(data) : [];
+
+      setAddedData(cart);
+    } catch (error) {
+      console.error('Failed to retrieve cart data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      await getDataCart();
-    };
-    fetchData();
-  }, [getDataCart]);
+    if (token) {
+      getDataCart();
+    } else {
+      getCartWithoutToken();
+      localPriceData();
+    }
+  }, [token]);
   const updateCartData = () => {
-    getDataCart(); // Fetch updated cart data
+    if (token) {
+      getDataCart();
+    }
+  };
+  const localPriceData = () => {
+    if (addedData) {
+      let totalPrice = 0;
+      let totalMrp = 0;
+      let discount = 0;
+      let tax = 0;
+      let finalPrice = 0;
+      addedData.forEach(item => {
+        totalMrp += item?.quantity * item?.default_price;
+
+        discount +=
+          item?.discount_type === 'amount'
+            ? item?.discount * item?.quantity
+            : (item?.default_price * item?.quantity * item?.discount) / 100;
+
+        tax += item?.quantity * item?.tax;
+        finalPrice += item?.quantity * item?.finalPrice;
+        totalPrice +=
+          item?.quantity * item?.default_price -
+          (item?.discount_type === 'amount'
+            ? item?.discount * item?.quantity
+            : (item?.default_price * item?.quantity * item?.discount) / 100);
+      });
+
+      setPriceData({
+        totalPrice,
+        totalMrp,
+        discount,
+        tax,
+        finalPrice,
+      });
+    }
   };
 
   const increseQuantity = async (id, combinationID) => {
@@ -146,9 +196,7 @@ const Carts = () => {
     const item = data?.item;
     return (
       <View style={styles.itemContainer}>
-        <TouchableOpacity
-          onPress={() => dispatch(removeProduct(item))}
-          style={{position: 'absolute', top: 5, right: 5}}>
+        <TouchableOpacity style={{position: 'absolute', top: 5, right: 5}}>
           <Icon name="close" size={20} color={Color.white} />
         </TouchableOpacity>
 
@@ -176,8 +224,11 @@ const Carts = () => {
             }}>
             <Text style={{color: Color.grey, fontSize: 20}}>
               ₹
-              {item?.product?.default_price -
-                (item?.product?.default_price * item?.product?.discount) / 100}
+              {item?.product?.discount_type === 'amount'
+                ? item?.product?.default_price - item?.product?.discount
+                : item?.product?.default_price -
+                  (item?.product?.default_price * item?.product?.discount) /
+                    100}
             </Text>
             {item?.product?.discount && (
               <Text
@@ -188,6 +239,85 @@ const Carts = () => {
                   fontSize: 13,
                 }}>
                 M.R.P : ₹ {item?.product?.default_price}
+              </Text>
+            )}
+            {item?.product?.discount && (
+              <Text
+                style={{
+                  fontSize: 12,
+                  color: Color.grey,
+                }}>
+                {item?.product?.discount_type === 'amount'
+                  ? `( ₹${item?.product?.discount} off )`
+                  : `(${item?.product?.discount}% off)`}
+              </Text>
+            )}
+          </View>
+        </View>
+      </View>
+    );
+  };
+  const renderWithoutToken = data => {
+    const item = data?.item;
+    return (
+      <View style={styles.itemContainer}>
+        <TouchableOpacity style={{position: 'absolute', top: 5, right: 5}}>
+          <Text>
+            <Icon name="close" size={20} color={Color.white} />
+          </Text>
+        </TouchableOpacity>
+
+        <View style={styles.itemImageContainer}>
+          <Image
+            source={{uri: apis.baseImgUrl + item?.images[0]?.image_url}}
+            style={styles.itemImage}
+            resizeMode="stretch"
+          />
+        </View>
+        <View style={styles.itemTitleContainer}>
+          <Text style={styles.itemTitle}>{item?.product_name}</Text>
+          {item?.rating && (
+            <Text style={{color: Color.white}}> {item?.rating}</Text>
+          )}
+          <CustomBtn
+            id={item?.product_id}
+            quantity={item?.quantity}
+            combId={item?.combination_id}
+          />
+          <View
+            style={{
+              flexDirection: 'row',
+              // justifyContent: 'center',
+              gap: 10,
+              alignItems: 'center',
+            }}>
+            <Text style={{color: Color.grey, fontSize: 20}}>
+              ₹
+              {item?.discount_type === 'amount'
+                ? item?.default_price - item?.discount
+                : item?.default_price -
+                  (item?.default_price * item?.discount) / 100}
+            </Text>
+            {item?.discount && (
+              <Text
+                style={{
+                  textDecorationLine: 'line-through',
+                  textDecorationStyle: 'solid',
+                  color: Color.grey,
+                  fontSize: 13,
+                }}>
+                M.R.P : ₹ {item?.default_price}
+              </Text>
+            )}
+            {item?.discount && (
+              <Text
+                style={{
+                  fontSize: 12,
+                  color: Color.grey,
+                }}>
+                {item?.discount_type === 'amount'
+                  ? `( ₹${item?.discount} off )`
+                  : `(${item?.discount}% off)`}
               </Text>
             )}
           </View>
@@ -216,23 +346,27 @@ const Carts = () => {
 
   const PriceDetails = () => (
     <View style={styles.priceContainer}>
-      <Text style={styles.priceText}>Price Details (3 items)</Text>
+      <Text style={styles.priceText}>
+        Price Details ({totalData > 0 && totalData} items)
+      </Text>
       <View style={styles.hr} />
       <View style={styles.priceData}>
         <View style={styles.pData}>
           <Text style={styles.text}>Total MRP</Text>
           <Text style={styles.text}>Discount on MRP </Text>
-          <Text style={styles.text}>Coupon Discount</Text>
+          {token && <Text style={styles.text}>Coupon Discount</Text>}
           <Text style={styles.text}>Shipping Fee </Text>
         </View>
         <View style={[styles.pData]}>
           <Text style={styles.text}>₹ {priceData?.totalMrp}</Text>
           <Text style={{color: Color.green}}> ₹ {priceData?.discount}</Text>
-          <Text style={styles.text}>
-            <TouchableOpacity style={styles.addressChange}>
-              <Text style={styles.addressTextChange}>Apply Coupan</Text>
-            </TouchableOpacity>
-          </Text>
+          {token && (
+            <Text style={styles.text}>
+              <TouchableOpacity style={styles.addressChange}>
+                <Text style={styles.addressTextChange}>Apply Coupan</Text>
+              </TouchableOpacity>
+            </Text>
+          )}
           <Text style={{color: Color.green}}>Free </Text>
         </View>
       </View>
@@ -285,15 +419,43 @@ const Carts = () => {
           )}
           {loading ? (
             <LoadingSkeleton />
-          ) : cartData.length === 0 ? (
+          ) : token ? (
+            cartData?.length === 0 ? (
+              <View style={styles.emptyCartContainer}>
+                <Text style={styles.emptyCartText}>No cart data available</Text>
+              </View>
+            ) : (
+              <>
+                <FlatList
+                  data={cartData}
+                  renderItem={renderItem}
+                  keyExtractor={item => item.id.toLocaleString()}
+                  numColumns={1} // Display 2 items per row
+                  contentContainerStyle={{
+                    padding: 10,
+                    gap: 2,
+                    marginBottom: 50,
+                  }}
+                />
+                <PriceDetails />
+                <CustomButton
+                  title="Proceed to checkout "
+                  onPressButton={() =>
+                    navigation.navigate(ScreenNames.checkout)
+                  }
+                />
+              </>
+            )
+          ) : addedData?.length === 0 ? (
             <View style={styles.emptyCartContainer}>
+              {console.log(addedData.length, 'addeddata.lenth')}
               <Text style={styles.emptyCartText}>No cart data available</Text>
             </View>
           ) : (
             <>
               <FlatList
-                data={cartData}
-                renderItem={renderItem}
+                data={addedData}
+                renderItem={renderWithoutToken}
                 keyExtractor={item => item.id.toLocaleString()}
                 numColumns={1} // Display 2 items per row
                 contentContainerStyle={{
@@ -305,7 +467,13 @@ const Carts = () => {
               <PriceDetails />
               <CustomButton
                 title="Proceed to checkout "
-                onPressButton={() => navigation.navigate(ScreenNames.checkout)}
+                onPressButton={() => {
+                  navigation.navigate(ScreenNames.LoginViaProtect);
+                  showMessage({
+                    message: 'Please login to proceed checkout.',
+                    type: 'warning',
+                  });
+                }}
               />
             </>
           )}

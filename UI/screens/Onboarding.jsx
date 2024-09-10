@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import ScreenNames from '../constants/Screens';
 import {SCREEN_HEIGHT, SCREEN_WIDTH} from '../styles/Size';
 import {Color} from '../styles/Color';
@@ -16,13 +16,40 @@ import image from '../../assets/images/onboarding/splash.png';
 import image3 from '../../assets/images/onboarding/main.png';
 import AppIntroSlider from 'react-native-app-intro-slider';
 import {useNavigation} from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {UseAuth} from '../context/AuthContext';
 
 const {height, width} = Dimensions.get('screen');
 
 const Onboarding = () => {
   const navigation = useNavigation();
   const [showHomePage, setShowHomePage] = useState(false);
+  const {token} = UseAuth();
 
+  useEffect(() => {
+    if (token) {
+      setShowHomePage(true);
+      navigation.navigate(ScreenNames.Home);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    const checkOnboardingStatus = async () => {
+      try {
+        const hasSeenOnboarding = await AsyncStorage.getItem(
+          'hasSeenOnboarding',
+        );
+        if (hasSeenOnboarding === 'true') {
+          setShowHomePage(true);
+          navigation.navigate(ScreenNames.Home);
+        }
+      } catch (error) {
+        console.error('Error checking onboarding status:', error);
+      }
+    };
+
+    checkOnboardingStatus();
+  }, []);
   const data = [
     {
       id: 1,
@@ -94,7 +121,9 @@ const Onboarding = () => {
 
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: Color.black}}>
-      <View>Hallo</View>
+      <View>
+        <Text></Text>
+      </View>
     </SafeAreaView>
   );
 };
