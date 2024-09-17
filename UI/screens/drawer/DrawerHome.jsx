@@ -1,8 +1,31 @@
 import {ImageBackground, StatusBar, StyleSheet, Text, View} from 'react-native';
-import React from 'react';
+import React, {useEffect} from 'react';
 import TabStackNavigator from '../../Routes/Navigation/BottomTabNavigation';
+import {setMainAddress} from '../../redux/slice/MainAddressSlice';
+import {useDispatch} from 'react-redux';
+import axios from '../../../axios';
+import {UseAuth} from '../../context/AuthContext';
 
 const DrawerHome = props => {
+  const dispatch = useDispatch();
+  const auth = UseAuth();
+  useEffect(() => {
+    const getAddress = async () => {
+      try {
+        const resp = await axios.get('/get-all-addresses', {
+          headers: {
+            Authorization: auth.token,
+          },
+        });
+        if (resp.data.code === 200) {
+          dispatch(setMainAddress(resp.data.addresses[0]));
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    getAddress();
+  }, []);
   return (
     <View style={{flex: 1}}>
       <ImageBackground

@@ -24,10 +24,10 @@ import axios from '../../../axios';
 import {apis} from '../../utils/api';
 import SkeletonLoader from '../../component/SkeletonLoader';
 import {showMessage} from 'react-native-flash-message';
-import AddressModal from './AddressChange';
-import ShippingTypeModal from './ShippingTypeModal';
+
 import {SCREEN_HEIGHT} from '../../styles/Size';
-import PaymentTypeModal from './PaymentTypeModal';
+import Customselect from '../../component/Customselect';
+import {useSelector} from 'react-redux';
 
 const CheckoutPage = () => {
   const getCartApi = apis.getCart;
@@ -35,6 +35,7 @@ const CheckoutPage = () => {
   const [cartItems, setCartItems] = useState([]);
   const auth = UseAuth();
   const {token} = auth;
+  const addSel = useSelector(state => state.MainAddressSlice);
 
   const [selectedAddress, setSelectedAddress] = useState({
     add1: '',
@@ -48,16 +49,13 @@ const CheckoutPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [removed, setRemoved] = useState(false);
   const [total_paid_amount, setTotalAmount] = useState('');
-  const [selectedShippingType, setSelectedShippingType] = useState('Standard');
+  const [selectedShippingType, setSelectedShippingType] = useState('online');
   const [selectedPaymentType, setSelectedPaymentType] = useState('Online');
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [isModalVisiblePayemnt, setIsModalVisiblePayment] = useState(false);
-  // const shippingOptions = ['Self Pickup', 'Online'];
   const [shippingOptions, setShippingOptions] = useState([]);
-  const paymentOptions = ['COD', 'Online'];
 
   const [address, setAddress] = useState([]);
-  const [modalVisible, setModalVisible] = useState(false); // Modal visibility state
+  const paymentOptions = ['COD', 'Online'];
+  const paymentOptionsAbove1000 = ['Online'];
 
   useEffect(() => {
     const getshippingType = async () => {
@@ -82,24 +80,23 @@ const CheckoutPage = () => {
           },
         });
         if (response.data.code === 200) {
-          setSelectedAddress({
-            add1:
-              response.data?.customer_data?.customer_addresses[0]?.add1 || '',
-            add2:
-              response.data?.customer_data?.customer_addresses[0]?.add2 || '',
-            city:
-              response.data?.customer_data?.customer_addresses[0]?.city || '',
-            state:
-              response.data?.customer_data?.customer_addresses[0]?.state || '',
-            country:
-              response.data?.customer_data?.customer_addresses[0]?.country ||
-              '',
-            pincode:
-              response.data?.customer_data?.customer_addresses[0]?.pincode ||
-              '',
-          });
+          // setSelectedAddress({
+          //   add1:
+          //     response.data?.customer_data?.customer_addresses[0]?.add1 || '',
+          //   add2:
+          //     response.data?.customer_data?.customer_addresses[0]?.add2 || '',
+          //   city:
+          //     response.data?.customer_data?.customer_addresses[0]?.city || '',
+          //   state:
+          //     response.data?.customer_data?.customer_addresses[0]?.state || '',
+          //   country:
+          //     response.data?.customer_data?.customer_addresses[0]?.country ||
+          //     '',
+          //   pincode:
+          //     response.data?.customer_data?.customer_addresses[0]?.pincode ||
+          //     '',
+          // });
           setAddress(response.data?.customer_data?.customer_addresses);
-          // console.log('====================================');
         }
       } catch (error) {
         console.error('Failed to fetch user details:', error);
@@ -110,51 +107,110 @@ const CheckoutPage = () => {
   }, []);
 
   useEffect(() => {
+    setSelectedAddress(addSel?.addresses);
+  }, [addSel?.addresses]);
+
+  const getCart = async () => {
+    try {
+      const response = await axios.get(getCartApi, {
+        headers: {
+          Authorization: token,
+        },
+      });
+      if (response.data.code === 200) {
+        setCartItems(response.data.cartItems);
+        setTotalAmount(response?.data?.totalPrice);
+      } else {
+        showMessage({
+          message: 'Error',
+          description: response.data.message,
+          type: 'error',
+        });
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     if (token) {
-      const getCart = async () => {
-        try {
-          const response = await axios.get(getCartApi, {
-            headers: {
-              Authorization: token,
-            },
-          });
-          if (response.data.code === 200) {
-            setCartItems(response.data.cartItems);
-            setTotalAmount(response?.data?.totalPrice);
-          } else {
-            showMessage({
-              message: 'Error',
-              description: response.data.message,
-              type: 'error',
-            });
-          }
-        } catch (error) {
-          console.error(error);
-        } finally {
-          setIsLoading(false);
-        }
-      };
       getCart();
     } else {
       navigation.navigate(ScreenNames.LoginViaProtect);
     }
   }, [removed, token]);
+  const placeOrder = async id => {
+    if (!addSel?.addresses?.id) {
+      showMessage({
+        message: 'Please Select Address',
+        type: 'warning',
+      });
+    } else {
+      const data = {
+        address_id: addSel?.addresses?.id,
+        delivery_type_id: selectedShippingType === 'online' ? 2 : 1,
+        payment_type: 'COD',
+        payment_order_id: id,
+        payment_signature: '123',
+        shipping_charge: 0,
+        total_product_amount: total_paid_amount,
+        coupon_id: null,
+        products: cartItems?.map(product => ({
+          product_id: product?.product?.id,
+          product_name: product?.product?.product_name,
+          combination_id: product?.combination_id,
+          quantity: product?.product?.quantity,
+          unit_price: 0,
+          total_price: product?.product?.default_price,
+          category_id: product?.product?.category_id,
+          sub_category_id: product?.product?.sub_category_id,
+          super_sub_category_id: product?.product?.super_sub_category_id,
+          product_type: product?.product?.product_type,
+          car_brand_id: product?.product?.car_brand_id,
+          car_model_id: product?.product?.car_model_id,
+          description: product?.product?.product_desc,
+          cgst: product?.product?.cgst,
+          sgst: product?.product?.sgst,
+          igst: product?.product?.igst,
+          tax_rate: product?.product?.tax_rate,
+          default_price: product?.product?.default_price,
+          discount_type: product?.product?.discount_type,
+          discount: product?.product?.discount,
+        })),
+        gst_total_amount: 0,
+        total_amount: total_paid_amount,
+        total_discount_amount: 0,
+      };
 
-  const handleAddressSave = newAddress => {
-    setSelectedAddress({
-      add1: newAddress.add1,
-      add2: newAddress.add2,
-      city: newAddress.city,
-      state: newAddress.state,
-      country: newAddress.country,
-      pincode: newAddress.pincode,
-    });
-  };
-  const handleShippingChnage = newShipping => {
-    setSelectedShippingType(newShipping);
-  };
-  const handlePaymentChange = newPayemnt => {
-    setSelectedPaymentType(newPayemnt);
+      try {
+        const res = await axios.post('/place-order', data, {
+          headers: {
+            Authorization: token,
+          },
+        });
+        if (res?.data?.status) {
+          showMessage({
+            message: 'Placed Successful',
+            description: 'Your order has been placed successfully',
+            type: 'success',
+          });
+          getCart();
+          navigation.navigate(ScreenNames.PaymentSuccessful);
+        } else {
+          showMessage({
+            message: 'Error',
+            description: 'Failed to place order',
+            type: 'error',
+          });
+        }
+      } catch (error) {
+        console.log('====================================');
+        console.log(error.response.data.message);
+        console.log('====================================');
+      }
+    }
   };
 
   const handleRemove = async (product_id, combination_id) => {
@@ -196,86 +252,87 @@ const CheckoutPage = () => {
   };
 
   const handleProceed = async () => {
-    // navigation.navigate(ScreenNames.PaymentSuccessful);
-    if (total_paid_amount) {
-      try {
-        const res = await axios.post(
-          '/create-razorpay-orderId',
-          {
-            amount: total_paid_amount * 100,
-          },
-          {
-            headers: {
-              Authorization: token,
+    if (!addSel?.addresses?.id) {
+      showMessage({
+        message: 'Please Select Address',
+        type: 'warning',
+      });
+    } else {
+      if (total_paid_amount) {
+        try {
+          const res = await axios.post(
+            '/create-razorpay-orderId',
+            {
+              amount: total_paid_amount * 100,
             },
-          },
-        );
-        if (res?.data?.code === 200) {
-          console.log('====================================');
-          console.log(res.data.data, 'w22');
-          console.log('====================================');
-          setRazordata(res.data.data);
+            {
+              headers: {
+                Authorization: token,
+              },
+            },
+          );
+          if (res?.data?.code === 200) {
+            setRazordata(res.data.data);
+            const {id, amount, currency} = res.data.data;
+            if (selectedPaymentType === 'COD') {
+              placeOrder(id, amount);
+            } else {
+              var options = {
+                description: 'Purchase Description',
+                image: 'https://kardify.in/images/logo.png',
+                currency: currency,
+                key: process.env.RAZORPAY_KEY_ID,
+                amount: amount,
+                name: 'Kardify',
 
-          const {id, amount, currency} = res.data.data;
-          const paidAmount = amount * 100;
+                theme: {color: '#528FF0'},
+              };
+              RazorpayCheckout.open(options)
+                .then(data => {
+                  console.log('====================================');
+                  console.log(razorData, 'razordata');
+                  console.log(res.data.data, 'razordata new data');
+                  console.log('====================================');
+                  // handle success
+                  const allData = {
+                    products: cartItems,
+                    data: data,
+                    address: selectedAddress,
+                    shippingType: selectedShippingType,
+                    paymentType: selectedPaymentType,
+                    total_amount: total_paid_amount,
+                    order_id: id,
+                    razorData: razorData,
+                  };
 
-          var options = {
-            description: 'Purchase Description',
-            image: 'https://kardify.in/images/logo.png',
-            currency: currency,
-            key: process.env.RAZORPAY_KEY_ID,
-            amount: amount,
-            name: 'Kardify',
-
-            theme: {color: '#528FF0'},
-          };
-          if (razorData) {
-            RazorpayCheckout.open(options)
-              .then(data => {
-                console.log('====================================');
-                console.log(razorData, 'razordata');
-                console.log(res.data.data, 'razordata new data');
-                console.log('====================================');
-                // handle success
-                const allData = {
-                  products: cartItems,
-                  data: data,
-                  address: selectedAddress,
-                  shippingType: selectedShippingType,
-                  paymentType: selectedPaymentType,
-                  total_amount: total_paid_amount,
-                  order_id: id,
-                  razorData: razorData,
-                };
-
-                navigation.navigate(ScreenNames.PaymentSuccessful, {allData});
-                console.log('Payment Successful:', data);
-                showMessage({
-                  message: 'Payment Successful',
-                  description: 'Your order has been placed successfully',
-                  type: 'success',
+                  navigation.navigate(ScreenNames.PaymentSuccessful, {allData});
+                  console.log('Payment Successful:', data);
+                  showMessage({
+                    message: 'Payment Successful',
+                    description: 'Your order has been placed successfully',
+                    type: 'success',
+                  });
+                })
+                .catch(error => {
+                  console.error('Payment Failed:', error?.description.reason); // Log the detailed error
+                  showMessage({
+                    message: 'Payment Failed',
+                    description:
+                      error?.description.reason ||
+                      'An error occurred while processing payment',
+                    type: 'danger',
+                  });
                 });
-              })
-              .catch(error => {
-                // handle failure
-                console.error('Payment Failed:', error?.description.reason); // Log the detailed error
-                showMessage({
-                  message: 'Payment Failed',
-                  description:
-                    error?.description.reason ||
-                    'An error occurred while processing payment',
-                  type: 'danger',
-                });
-              });
+            }
           }
+        } catch (error) {
+          console.error(error);
+          showMessage({
+            message: 'Payment Failed',
+            description: 'An error occurred while processing payment',
+            type: 'danger',
+          });
         }
-      } catch (error) {
-        console.error(error);
-        showMessage({
-          message: 'Payment Failed',
-          description: 'An error occurred while processing payment',
-          type: 'danger',
-        });
       }
     }
   };
@@ -284,11 +341,11 @@ const CheckoutPage = () => {
     navigation.navigate(ScreenNames.addressChange);
   };
 
-  const handleShippingTypeChange = () => {
-    setIsModalVisible(true);
+  const handleShippingTypeChange = item => {
+    setSelectedShippingType(item?.delivery_type_name);
   };
-  const handlePaymentTypeChange = () => {
-    setIsModalVisiblePayment(true);
+  const handlePaymentTypeChange = item => {
+    setSelectedPaymentType(item);
   };
 
   const renderItem = data => {
@@ -411,13 +468,15 @@ const CheckoutPage = () => {
             <View style={styles.addressContainer}>
               <Icon name="location-pin" size={20} color={Color.white} />
               <View style={styles.addressDetails}>
-                <Text style={styles.addressType}>{selectedAddress.add1}</Text>
+                <Text style={styles.addressType}>
+                  {selectedAddress?.add1 || selectedAddress?.addressType}
+                </Text>
 
                 <Text style={styles.addressText}>
-                  {selectedAddress.fullName}, {selectedAddress.buildingName},{' '}
-                  {selectedAddress.landmark}, {selectedAddress.area},{' '}
-                  {selectedAddress.city}, {selectedAddress.state},{' '}
-                  {selectedAddress.pincode}, {selectedAddress.country}
+                  {selectedAddress?.fullName}, {selectedAddress?.buildingName},{' '}
+                  {selectedAddress?.landmark}, {selectedAddress?.area},{' '}
+                  {selectedAddress?.city}, {selectedAddress?.state},{' '}
+                  {selectedAddress?.pincode}, {selectedAddress?.country}
                 </Text>
               </View>
               <TouchableOpacity onPress={handleAddressChange}>
@@ -430,22 +489,26 @@ const CheckoutPage = () => {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Shipping Type</Text>
             <View style={styles.shippingTypeContainer}>
-              <Text style={styles.shippingTypeText}>
-                {selectedShippingType}
-              </Text>
-              <TouchableOpacity onPress={handleShippingTypeChange}>
-                <Text style={styles.changeText}>Change</Text>
-              </TouchableOpacity>
+              <Customselect
+                selectedType={selectedShippingType}
+                setSelectedType={handleShippingTypeChange}
+                arr={shippingOptions}
+              />
             </View>
           </View>
           {/* Payment Type Section */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Payment Type</Text>
             <View style={styles.shippingTypeContainer}>
-              <Text style={styles.shippingTypeText}>{selectedPaymentType}</Text>
-              <TouchableOpacity onPress={handlePaymentTypeChange}>
-                <Text style={styles.changeText}>Change</Text>
-              </TouchableOpacity>
+              <Customselect
+                selectedType={selectedPaymentType}
+                setSelectedType={handlePaymentTypeChange}
+                arr={
+                  total_paid_amount > 1000
+                    ? paymentOptionsAbove1000
+                    : paymentOptions
+                }
+              />
             </View>
           </View>
           {/* Order List Section */}
@@ -467,33 +530,17 @@ const CheckoutPage = () => {
         </ScrollView>
         {/* Checkout Button */}
         <View style={styles.checkoutButtonContainer}>
-          {!isLoading && (
-            <CustomButton
-              title="Proceed to Payment"
-              onPressButton={() => {
-                handleProceed();
-              }}
-            />
-          )}
+          {/* {!isLoading && ( */}
+          <CustomButton
+            title={
+              selectedPaymentType === 'COD'
+                ? 'Place Order'
+                : 'Proceed to Payment'
+            }
+            onPressButton={handleProceed}
+          />
+          {/* )} */}
         </View>
-        <AddressModal
-          visible={modalVisible}
-          onClose={() => setModalVisible(false)}
-          onAddressChange={handleAddressSave}
-          addresses={address}
-        />
-        <ShippingTypeModal
-          visible={isModalVisible}
-          onClose={() => setIsModalVisible(false)}
-          shippingOptions={shippingOptions}
-          onShippingChange={handleShippingChnage}
-        />
-        <PaymentTypeModal
-          visible={isModalVisiblePayemnt}
-          onClose={() => setIsModalVisiblePayment(false)}
-          shippingOptions={paymentOptions}
-          onShippingChange={handlePaymentChange}
-        />
       </ImageBackground>
     </SafeAreaView>
   );

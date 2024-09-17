@@ -102,9 +102,6 @@ const ProductDetails = ({route, navigation}) => {
           },
         },
       );
-      console.log('====================================');
-      console.log(response.data.code, 'response.data.code');
-      console.log('====================================');
 
       if (response.data.code === 201) {
         // Extract the product data from the response
@@ -134,9 +131,7 @@ const ProductDetails = ({route, navigation}) => {
       });
     }
   };
-  const closeTrackOrderModal = () => {
-    setOpenSheetModal(false);
-  };
+
   useEffect(() => {
     setisWish(selector?.wishList?.data);
   }, [isWish?.length, dispatch, selector?.wishList?.data]);
@@ -201,18 +196,21 @@ const ProductDetails = ({route, navigation}) => {
       token: auth.token,
       id: id,
     };
+    if (token) {
+      try {
+        // Dispatch addWishList and wait for it to complete
+        await dispatch(addWishList(cred)).unwrap();
 
-    try {
-      // Dispatch addWishList and wait for it to complete
-      await dispatch(addWishList(cred)).unwrap();
+        // Dispatch getWhishList and wait for it to complete
+        await dispatch(getWhishList(auth.token)).unwrap();
 
-      // Dispatch getWhishList and wait for it to complete
-      await dispatch(getWhishList(auth.token)).unwrap();
-
-      // Optionally handle success here, e.g., show a success message
-    } catch (error) {
-      console.error(error);
-      // Optionally handle the error here, e.g., show an error message
+        // Optionally handle success here, e.g., show a success message
+      } catch (error) {
+        console.error(error);
+        // Optionally handle the error here, e.g., show an error message
+      }
+    } else {
+      navigation.navigate(ScreenNames.LoginViaProtect);
     }
   };
   const removeFromWishList = useCallback(
@@ -272,6 +270,9 @@ const ProductDetails = ({route, navigation}) => {
     const isInWishlist =
       Array.isArray(isWish) &&
       isWish?.some(wishItem => wishItem?.product_id === item.id);
+    console.log('====================================');
+    console.log(item?.default_price, 'item');
+    console.log('====================================');
 
     return (
       <View style={{flex: 1, minHeight: SCREEN_HEIGHT, padding: 10}}>
@@ -358,75 +359,6 @@ const ProductDetails = ({route, navigation}) => {
               </View>
             )}
 
-            {/* Here i have to make a select to select attributes */}
-
-            {/* <View
-                style={{
-                  width: SCREEN_WIDTH,
-                  // overflow:'scroll',
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginVertical: 10,
-                }}>
-                <View>
-                  <Text
-                    style={{
-                      fontWeight: 'bold',
-                      fontSize: 28,
-                      textTransform: 'capitalize',
-                      color: Color.white,
-                    }}>
-                    {item?.product_name}
-                  </Text>
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: 'bold',
-                      color: Color.white,
-                    }}>
-                    {item?.product_type}
-                  </Text>
-                </View>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    gap: 4,
-                    alignItems: 'flex-end',
-                  }}>
-                  <Text
-                    style={{
-                      fontSize: 24,
-                      fontWeight: 'bold',
-                      color: Color.white,
-                    }}>
-                    ₹{' '}
-                    {item?.default_price -
-                      (item?.default_price * item?.discount) / 100}
-                  </Text>
-                  {item?.discount && (
-                    <>
-                      <Text
-                        style={{
-                          textDecorationLine: 'line-through',
-                          fontSize: 12,
-                          color: Color.grey,
-                        }}>
-                        ₹ {item?.default_price}
-                      </Text>
-
-                      <Text
-                        style={{
-                          fontSize: 12,
-                          color: Color.grey,
-                        }}>
-                        ({item?.discount}% Off)
-                      </Text>
-                    </>
-                  )}
-                </View>
-              </View> */}
-
             <View
               style={{
                 width: SCREEN_WIDTH,
@@ -453,59 +385,25 @@ const ProductDetails = ({route, navigation}) => {
                   }}>
                   {item?.product_type}
                 </Text>
-                {isNameTooLong && (
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'flex-end',
-                      marginTop: 4,
-                    }}>
-                    <Text
-                      style={{
-                        fontSize: 24,
-                        fontWeight: 'bold',
-                        color: Color.white,
-                      }}>
-                      ₹
-                      {item?.discount_type === 'amount'
-                        ? item?.default_price - item?.discount
-                        : item?.default_price -
-                          (item?.default_price * item?.discount) / 100}
-                    </Text>
-                    {item?.discount && (
-                      <>
-                        <Text
-                          style={{
-                            textDecorationLine: 'line-through',
-                            fontSize: 12,
-                            color: Color.grey,
-                          }}>
-                          ₹ {item?.default_price}
-                        </Text>
-                        <Text
-                          style={{
-                            fontSize: 12,
-                            color: Color.grey,
-                          }}>
-                          {item?.discount_type === 'amount'
-                            ? `( ₹${item?.discount} off )`
-                            : `(${item?.discount}% off)`}
-                        </Text>
-                      </>
-                    )}
-                  </View>
-                )}
-              </View>
-
-              {/* If the name is not too long, show the price on the same line */}
-              {!isNameTooLong && (
                 <View
                   style={{
                     flexDirection: 'row',
                     alignItems: 'flex-end',
                     marginTop: 4,
                   }}>
-                  {item?.discount && (
+                  <Text
+                    style={{
+                      fontSize: 24,
+                      fontWeight: 'bold',
+                      color: Color.white,
+                    }}>
+                    ₹
+                    {item?.discount_type === 'amount'
+                      ? item?.default_price - item?.discount
+                      : item?.default_price -
+                        (item?.default_price * item?.discount) / 100}
+                  </Text>
+                  {/* {item?.discount && (
                     <>
                       <Text
                         style={{
@@ -525,17 +423,44 @@ const ProductDetails = ({route, navigation}) => {
                           : `(${item?.discount}% off)`}
                       </Text>
                     </>
-                  )}
+                  )} */}
                 </View>
-              )}
+                {/* )} */}
+              </View>
+
+              {/* If the name is not too long, show the price on the same line */}
+              {/* {!isNameTooLong && ( */}
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'flex-end',
+                  marginTop: 4,
+                }}>
+                {item?.discount && (
+                  <>
+                    <Text
+                      style={{
+                        textDecorationLine: 'line-through',
+                        fontSize: 12,
+                        color: Color.grey,
+                      }}>
+                      ₹ {item?.default_price}
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        color: Color.grey,
+                      }}>
+                      {item?.discount_type === 'amount'
+                        ? `( ₹${item?.discount} off )`
+                        : `(${item?.discount}% off)`}
+                    </Text>
+                  </>
+                )}
+              </View>
+              {/* )} */}
             </View>
             <View style={{flexDirection: 'row', gap: 5}}>
-              {/* <Text style={{fontWeight: 'bold', color: Color.white}}>
-              Quantity:
-            </Text>
-            <Text style={{fontWeight: 'bold', color: Color.grey}}>
-              {item?.quantity}
-            </Text> */}
               <AirbnbRating
                 defaultRating={item?.rating}
                 count={5}
@@ -563,51 +488,55 @@ const ProductDetails = ({route, navigation}) => {
                 </Text>
               </View>
             )}
-
-            <Text style={{fontWeight: 'bold', color: Color.white}}>
-              Description:{' '}
-            </Text>
-            <RenderHTML
-              contentWidth={SCREEN_WIDTH}
-              source={{
-                html: `<p style="color: ${Color.grey}">
+            {item?.product_desc && (
+              <>
+                <Text style={{fontWeight: 'bold', color: Color.white}}>
+                  Description:{' '}
+                </Text>
+                <RenderHTML
+                  contentWidth={SCREEN_WIDTH}
+                  source={{
+                    html: `<p style="color: ${Color.grey}">
                 <span style="">
                   ${item?.product_desc}
                 </span>
               </p>`,
-              }}
-            />
-            <Text style={{fontWeight: 'bold', color: Color.white}}>
-              Exchange Policy:{' '}
-            </Text>
-            <Text style={{fontWeight: 'bold', color: Color.grey}}>
-              {item?.exchange_policy}
-            </Text>
-            <Text style={{fontWeight: 'bold', color: Color.white}}>
-              Cancellation Policy:{' '}
-            </Text>
-            <Text style={{fontWeight: 'bold', color: Color.grey}}>
-              {item?.cancellation_policy}
-            </Text>
-            {/* <RenderHTML
-            contentWidth={SCREEN_WIDTH}
-            source={{
-              html: `<p style="color: ${Color.grey}">
-                <span style="">
-                  ${item?.product_desc}
-                </span>
-              </p>`,
-            }}
-          /> */}
+                  }}
+                />
+              </>
+            )}
+            {item?.exchange_policy && (
+              <>
+                <Text style={{fontWeight: 'bold', color: Color.white}}>
+                  Exchange Policy:{' '}
+                </Text>
+                <Text style={{fontWeight: 'bold', color: Color.grey}}>
+                  {item?.exchange_policy}
+                </Text>
+              </>
+            )}
+            {item?.cancellation_policy && (
+              <>
+                <Text style={{fontWeight: 'bold', color: Color.white}}>
+                  Cancellation Policy:{' '}
+                </Text>
+                <Text style={{fontWeight: 'bold', color: Color.grey}}>
+                  {item?.cancellation_policy}
+                </Text>
+              </>
+            )}
           </View>
         </View>
-        {/* {auth.token && ( */}
         <TouchableOpacity
           onPress={() => {
-            if (isInWishlist) {
-              removeFromWishList(item?.id);
+            if (!auth.token) {
+              navigation.navigate(ScreenNames.LoginViaProtect);
             } else {
-              addWishListProduct(item?.id);
+              if (isInWishlist) {
+                removeFromWishList(item?.id);
+              } else {
+                addWishListProduct(item?.id);
+              }
             }
           }}
           style={{

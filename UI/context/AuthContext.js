@@ -45,14 +45,14 @@ export const AuthProvider = ({children}) => {
 
   // -----------------------login authentication-----------------------------
 
-  const login = async (username, password) => {
+  const login = async (username, password, navigation) => {
     setIsLoading(true);
     try {
       const response = await axios.post(loginAPI, {
         username: username,
         password: password,
       });
-      console.log(response.data.code, 'res');
+      console.log(response.status, 'res');
 
       if (response.status === 200) {
         if (response.data.code === 200) {
@@ -63,7 +63,11 @@ export const AuthProvider = ({children}) => {
             type: 'success',
           });
           checkToken();
-          navigation.navigate(ScreenNames.Home);
+          if (navigation) {
+            navigation.goBack();
+          } else {
+            navigation.navigate(ScreenNames.Home);
+          }
         } else if (response.data.code === 400) {
           setIsLoading(false);
           showMessage({

@@ -7,9 +7,6 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Image,
-  Modal,
-  Button,
-  ActivityIndicator,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -30,8 +27,8 @@ const More = props => {
   const {token} = auth;
   const [isEditing, setIsEditing] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
-  const [uploading, setUploading] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedImageShow, setSelectedImageShow] = useState(null);
+
   const userDetail = useSelector(state => state.profile);
 
   const handleImagePick = async () => {
@@ -41,16 +38,20 @@ const More = props => {
       } else if (response.errorMessage) {
         console.log('ImagePicker Error: ', response.errorMessage);
       } else {
-        const source = {uri: response.assets[0].uri};
-        console.log('====================================');
-        console.log(source, 'sourec');
-        console.log('====================================');
+        const asset = response.assets[0];
+        const source = {
+          uri: asset.uri,
+          type: asset.type,
+          name: asset.fileName || 'photo.jpg',
+        };
         setSelectedImage(source);
+        setSelectedImageShow(source);
+
         handleUploadImage();
-        // setModalVisible(true);
       }
     });
   };
+
   const handleUploadImage = async () => {
     if (!selectedImage) {
       showMessage({
@@ -60,16 +61,15 @@ const More = props => {
       return;
     }
 
+    const data = new FormData();
+
+    data.append('profile_img', {
+      uri: selectedImageShow.uri,
+      type: selectedImageShow.type || 'image/jpeg',
+      name: selectedImageShow.name || 'photo.jpg',
+    });
+
     try {
-      const data = new FormData();
-      data.append('image', {
-        uri: selectedImage.uri,
-        name: 'image.jpg',
-        type: 'image/jpeg',
-      });
-
-      data.append('profile_img', selectedImage.uri); // Update as needed
-
       const response = await axios.post(apis.edit_profile, data, {
         headers: {
           Accept: 'application/json',
@@ -79,25 +79,118 @@ const More = props => {
       });
 
       const result = response?.data;
-      if (result.code === 200) {
-        showMessage({
-          message: 'Image uploaded successfully',
-          type: 'success',
-        });
+
+      if (result?.code === 200) {
+        const fileUrl = result?.file_url;
+        console.log(result?.message);
+        if (fileUrl) {
+          showMessage({
+            message: 'Image uploaded successfully',
+            type: 'success',
+          });
+        } else {
+          console.log(result);
+          showMessage({
+            message: result.message || 'Image uploaded',
+            type: 'success',
+          });
+        }
       } else {
+        console.log('Error:', result?.message);
         showMessage({
-          message: 'Failed to upload image',
+          message: result?.message || 'Failed to upload image',
           type: 'warning',
         });
       }
     } catch (error) {
-      console.log('Error while uploading image:', error);
+      console.log('Error while uploading image error:', error);
       showMessage({
         message: 'Failed to upload image',
         type: 'danger',
       });
+      console.log('Error while uploading image:', error?.message);
     }
   };
+
+  // const handleImagePick = async () => {
+  //   await launchImageLibrary({mediaType: 'photo', quality: 1}, response => {
+  //     if (response.didCancel) {
+  //       console.log('User cancelled image picker');
+  //     } else if (response.errorMessage) {
+  //       console.log('ImagePicker Error: ', response.errorMessage);
+  //     } else {
+  //       const source = {uri: response.assets[0]};
+
+  //       setSelectedImage(source);
+  //       handleUploadImage();
+  //     }
+  //   });
+  // };
+  // const handleUploadImage = async () => {
+  //   if (!selectedImage) {
+  //     showMessage({
+  //       message: 'No image selected',
+  //       type: 'warning',
+  //     });
+  //     return;
+  //   }
+
+  //   try {
+  //     const data = new FormData();
+  //     console.log('====================================');
+  //     console.log(selectedImage);
+  //     // console.log(data);
+  //     console.log('====================================');
+  //     data.append('profile_img', {
+  //       file_url: selectedImage.uri.uri,
+  //       filename: selectedImage?.uri?.fileName,
+  //       name: selectedImage.uri.filename || 'photo.jpg',
+  //       type: selectedImage.uri.type || 'image/jpeg',
+  //     });
+
+  //     console.log('====================================');
+  //     console.log(data?._parts);
+  //     console.log('====================================');
+
+  //     const response = await axios.post(apis.edit_profile, data, {
+  //       headers: {
+  //         Accept: 'application/json',
+  //         'Content-Type': 'multipart/form-data',
+  //         Authorization: token,
+  //       },
+  //     });
+
+  //     const result = response?.data;
+
+  //     if (result?.code === 200) {
+  //       const fileUrl = result?.file_url;
+  //       if (fileUrl) {
+  //         showMessage({
+  //           message: 'Image uploaded successfully',
+  //           type: 'success',
+  //         });
+  //       } else {
+  //         showMessage({
+  //           message: 'Image uploaded, but file URL is missing',
+  //           type: 'warning',
+  //         });
+  //       }
+  //     } else {
+  //       showMessage({
+  //         message: 'Failed to upload image',
+  //         type: 'warning',
+  //       });
+  //       console.log('Error:', result?.message);
+  //     }
+  //   } catch (error) {
+  //     showMessage({
+  //       message: 'Failed to upload image',
+  //       type: 'danger',
+  //     });
+  //     console.log('Error while uploading image error:', error);
+  //     console.log('Error while uploading image:', error?.message);
+  //   }
+  // };
   const [modalVisibleLogout, setModalVisibleLogout] = useState(false);
 
   const handleLogOut = () => {
@@ -116,16 +209,10 @@ const More = props => {
 
   const arr = [
     {
-      id: 1,
-      name: 'My Orders',
-      icon: 'all-inbox',
-      onPress: () => props.navigation.navigate(ScreenNames.myorder),
-    },
-    {
       id: 2,
       name: 'Stories',
       icon: 'all-inbox',
-      onPress: () => props.navigation.navigate(ScreenNames.stories),
+      onPress: () => props.navigation.navigate(ScreenNames.addstories),
     },
     {
       id: 3,
@@ -182,12 +269,12 @@ const More = props => {
       icon: 'all-inbox',
       onPress: () => props.navigation.navigate(ScreenNames.customerSupport),
     },
-    {
-      id: 11,
-      name: 'Rewards',
-      icon: 'all-inbox',
-      onPress: () => props.navigation.navigate(ScreenNames.reward),
-    },
+    // {
+    //   id: 11,
+    //   name: 'Rewards',
+    //   icon: 'all-inbox',
+    //   onPress: () => props.navigation.navigate(ScreenNames.reward),
+    // },
     {
       id: 12,
       name: 'Terms & Condition',
@@ -250,12 +337,6 @@ const More = props => {
               </View>
             )}
 
-            {/* {isEditing && (
-              <View style={styles.uploadContainer}>
-                <Button title="Choose Image" onPress={handleImagePick} />
-              </View>
-            )} */}
-
             {!token && (
               <TouchableOpacity
                 onPress={() =>
@@ -265,6 +346,18 @@ const More = props => {
                   <View style={styles.storesContent}>
                     <Icon name={'all-inbox'} style={styles.storeIcon} />
                     <Text style={styles.storeText}>Login</Text>
+                  </View>
+                  <Icon name="arrow-forward-ios" style={styles.arrowIcon} />
+                </View>
+              </TouchableOpacity>
+            )}
+            {token && (
+              <TouchableOpacity
+                onPress={() => props.navigation.navigate(ScreenNames.myorder)}>
+                <View style={styles.stores}>
+                  <View style={styles.storesContent}>
+                    <Icon name={'all-inbox'} style={styles.storeIcon} />
+                    <Text style={styles.storeText}>My Order</Text>
                   </View>
                   <Icon name="arrow-forward-ios" style={styles.arrowIcon} />
                 </View>
@@ -299,28 +392,7 @@ const More = props => {
         </ScrollView>
 
         {/* Modal for image upload */}
-        <Modal
-          visible={modalVisible}
-          transparent={true}
-          animationType="slide"
-          onRequestClose={() => setModalVisible(false)}>
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              {uploading ? (
-                <ActivityIndicator size="large" color="#0000ff" />
-              ) : (
-                <>
-                  <Image source={selectedImage} style={styles.modalImage} />
-                  <Button title="Upload Image" onPress={handleUploadImage} />
-                  <Button
-                    title="Cancel"
-                    onPress={() => setModalVisible(false)}
-                  />
-                </>
-              )}
-            </View>
-          </View>
-        </Modal>
+
         <LogoutConfirmationModal
           visible={modalVisibleLogout}
           onConfirm={handleConfirmLogout}

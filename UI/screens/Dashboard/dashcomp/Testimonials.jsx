@@ -25,14 +25,70 @@ const Testimonials = () => {
       console.error('Error fetching testimonials:', error);
     }
   };
-
+  const testimonials2 = [
+    {
+      id: 1,
+      customer_id: 1,
+      rating: 4.5,
+      heading: 'Testimony',
+      description: 'This is my Testimony',
+      status: 1,
+      createdAt: '2024-04-01T10:21:02.000Z',
+      updatedAt: '2024-04-01T10:21:02.000Z',
+      deletedAt: null,
+      customer: {
+        id: 1,
+        fullname: 'Subham kumar jena',
+        username: 'subham.kj@jurysoft.com',
+        profile_img: null,
+        phone: null,
+        email: null,
+        dob: null,
+        gender: null,
+        language: null,
+        device_token: null,
+        verified: 1,
+        createdAt: '2024-03-26T09:45:44.000Z',
+        updatedAt: '2024-08-27T06:50:44.000Z',
+        deletedAt: null,
+      },
+    },
+    {
+      id: 2,
+      customer_id: 1,
+      rating: 4.5,
+      heading: 'Testimony',
+      description:
+        'Lorem ipsum, dolor sit amet consectetur adipisicing elit. Fugit hic odit obcaecati, earum, temporibus vitae cum ad dignissimos quam ex amet. Sed cum obcaecati, ratione voluptatibus quisquam, saepe aspernatur fuga fugiat voluptate, velit porro pariatur dicta suscipit odit. Cum deleniti earum ducimus non dolor consequatur eligendi architecto necessitatibus commodi explicabo.',
+      status: 1,
+      createdAt: '2024-04-01T10:21:02.000Z',
+      updatedAt: '2024-04-01T10:21:02.000Z',
+      deletedAt: null,
+      customer: {
+        id: 1,
+        fullname: 'Subham kumar jena',
+        username: 'subham.kj@jurysoft.com',
+        profile_img: null,
+        phone: null,
+        email: null,
+        dob: null,
+        gender: null,
+        language: null,
+        device_token: null,
+        verified: 1,
+        createdAt: '2024-03-26T09:45:44.000Z',
+        updatedAt: '2024-08-27T06:50:44.000Z',
+        deletedAt: null,
+      },
+    },
+  ];
   const handleImageError = useCallback(id => {
     setImgError(prevState => ({...prevState, [id]: true}));
   }, []);
 
   const renderItem = useCallback(
     item => (
-      <View style={styles.cmnbdy}>
+      <View style={styles.card}>
         <Image
           source={
             imgError[item.id]
@@ -43,19 +99,17 @@ const Testimonials = () => {
           style={styles.profileImage}
           onError={() => handleImageError(item.id)}
         />
-
-        <View style={styles.cmntxt}>
+        <View style={styles.textContainer}>
           <Text style={styles.descriptionText}>{item.description}</Text>
         </View>
-
         <AirbnbRating
           defaultRating={item?.rating}
           count={5}
           size={20}
           showRating={false}
           isDisabled={true}
+          starContainerStyle={styles.rating}
         />
-
         <Text style={styles.customerName}>{item?.customer?.fullname}</Text>
       </View>
     ),
@@ -63,13 +117,8 @@ const Testimonials = () => {
   );
 
   return (
-    <View
-      style={{
-        paddingVertical: 40,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: Color.yellow,
-      }}>
+    <View style={styles.container}>
+      <Text style={styles.header}>Testimonials</Text>
       <Swiper
         style={styles.wrapper}
         showsPagination={true}
@@ -77,7 +126,7 @@ const Testimonials = () => {
         dotStyle={styles.dotStyle}
         activeDotStyle={styles.activeDotStyle}
         contentContainerStyle={styles.contentContainer}>
-        {testimonials.map(item => (
+        {testimonials2.map(item => (
           <View key={item.id} style={styles.slide}>
             {renderItem(item)}
           </View>
@@ -90,52 +139,69 @@ const Testimonials = () => {
 export default Testimonials;
 
 const styles = StyleSheet.create({
-  wrapper: {
-    height: SCREEN_HEIGHT / 4,
-    width: SCREEN_WIDTH / 1.25,
-    marginLeft: 10,
-    justifyContent: 'center', // Center vertically
-  },
-  slide: {
-    width: SCREEN_WIDTH / 1.25,
-    marginLeft: 10,
-    justifyContent: 'center', // Center vertically
-    alignItems: 'center', // Center horizontally
-  },
-  cmnbdy: {
-    height: '100%',
-    width: '100%',
-    backgroundColor: '#1C1F22',
-    borderRadius: 10,
-    display: 'flex',
-    flexDirection: 'column',
+  container: {
+    paddingVertical: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 8,
-    padding: 10,
-    marginBottom: 10,
+    backgroundColor: '#F1CB2A',
+  },
+  header: {
+    color: 'white',
+    fontSize: 24,
+    lineHeight: 30,
+    fontWeight: '800',
+    marginVertical: 15,
+    textAlign: 'center',
+  },
+  wrapper: {
+    height: SCREEN_HEIGHT / 3,
+    width: SCREEN_WIDTH * 0.9,
+  },
+  slide: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  card: {
+    height: '90%',
+    width: '90%',
+    backgroundColor: '#1C1F22',
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 15,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   profileImage: {
-    marginTop: 10,
-    height: SCREEN_HEIGHT / 10,
-    width: SCREEN_HEIGHT / 10,
-    borderRadius: SCREEN_HEIGHT / 20,
+    height: SCREEN_HEIGHT / 8,
+    width: SCREEN_HEIGHT / 8,
+    borderRadius: SCREEN_HEIGHT / 16,
+    marginBottom: 10,
+    borderWidth: 2,
+    borderColor: Color.white,
   },
-  cmntxt: {
-    height: SCREEN_HEIGHT / 18,
-    width: SCREEN_WIDTH / 1.4,
-    alignSelf: 'center',
-    justifyContent: 'center',
-    marginVertical: 10,
+  textContainer: {
+    height: 20,
+    marginBottom: 15,
+    width: '100%',
   },
   descriptionText: {
-    fontSize: 12,
+    fontSize: 14,
     textAlign: 'center',
     color: Color.white,
+    paddingHorizontal: 10,
+  },
+  rating: {
+    marginVertical: 10,
   },
   customerName: {
+    fontSize: 16,
     color: Color.white,
-    marginTop: 5,
+    fontWeight: 'bold',
   },
   paginationStyle: {
     bottom: 10,
@@ -144,12 +210,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
   },
   activeDotStyle: {
-    backgroundColor: '#04A9F5',
+    backgroundColor: Color.yellow,
   },
   contentContainer: {
     alignItems: 'center',
-    height: 'auto',
-    flex: 1, // Center horizontally in Swiper container
-    minHeight: 200,
   },
 });

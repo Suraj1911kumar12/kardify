@@ -1,27 +1,29 @@
+import React, {useCallback, useEffect, useState} from 'react';
 import {
-  Dimensions,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
   FlatList,
   Modal,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  TextInput,
   SafeAreaView,
   ImageBackground,
-  Pressable,
   Image,
+  StyleSheet,
+  Dimensions,
+  Platform,
+  PermissionsAndroid,
 } from 'react-native';
-import React, {useCallback, useEffect, useState} from 'react';
+import Voice from '@react-native-voice/voice'; // Import the Voice module
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import {Color} from '../styles/Color';
 import axios from '../../axios';
 import Cmnhdr2 from './Cmnheader2';
 import {useNavigation} from '@react-navigation/native';
 import ScreenNames from '../constants/Screens';
+import {Color} from '../styles/Color';
 import {apis} from '../utils/api';
 
-const {width, height} = Dimensions.get('window');
+const {width} = Dimensions.get('window');
 
 const FullSearchBar = () => {
   const navigation = useNavigation();
@@ -30,23 +32,107 @@ const FullSearchBar = () => {
   const [filteredData, setFilteredData] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [voiceResult, setVoiceResult] = useState('');
 
+  // Fetch product data
   const getProduct = useCallback(async () => {
     try {
       const resp = await axios.get('/get-products-customer');
       if (resp.data.code === 200) {
         setSearchData(resp.data.products);
-        // setFilteredData(resp.data.products); // Set initial filtered data
+        setFilteredData(resp.data.products);
       }
     } catch (error) {
-      console.log(error);
+      console.error('Error fetching product data:', error);
     }
   }, []);
 
   useEffect(() => {
-    getProduct();
+    getProduct(); // Load products on component mount
+
+    Voice.onSpeechResults = onSpeechResults; // Event listener for speech results
+    Voice.onSpeechError = onSpeechError; // Event listener for speech errors
+
+    // Cleanup voice listeners on unmount
+    return () => {
+      Voice.destroy().then(Voice.removeAllListeners);
+    };
   }, [getProduct]);
 
+  // Request microphone permissions
+  const requestMicrophonePermission = async () => {
+    if (Platform.OS === 'android') {
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
+          {
+            title: 'Microphone Permission',
+            message: 'This app needs access to your microphone.',
+            buttonNeutral: 'Ask Me Later',
+            buttonNegative: 'Cancel',
+            buttonPositive: 'OK',
+          },
+        );
+        return granted === PermissionsAndroid.RESULTS.GRANTED;
+      } catch (err) {
+        console.warn(err);
+        return false;
+      }
+    } else {
+      return true; // iOS handles permissions differently
+    }
+  };
+
+  // Start listening for voice input
+  const startListening = async () => {
+    const hasPermission = await requestMicrophonePermission();
+    if (!hasPermission) {
+      console.error('Microphone permission denied');
+      return;
+    }
+    try {
+      setIsModalVisible(true);
+      setIsListening(true);
+      await Voice.start('en-US'); // Start voice recognition for English (US)
+      setVoiceResult('Listning....');
+    } catch (e) {
+      console.error('Error starting voice recognition:', e);
+      setIsListening(false);
+    }
+  };
+
+  // Stop listening
+  const stopListening = async () => {
+    try {
+      setIsListening(false);
+      await Voice.stop(); // Stop voice recognition
+      // Perform search with the last recognized voice result
+      handleSearch(voiceResult);
+    } catch (e) {
+      console.error('Error stopping voice recognition:', e);
+    }
+  };
+
+  // Callback when speech recognition results are available
+  const onSpeechResults = event => {
+    if (event.value && event.value.length > 0) {
+      const spokenText = event.value[0];
+      setVoiceResult(spokenText); // Update voiceResult with spoken text
+      setSearchQuery(spokenText); // Update search query with spoken text
+      handleSearch(spokenText); // Trigger search with the recognized text
+    }
+    // Call stopListening after processing results to perform a search
+    stopListening();
+  };
+
+  // Callback for speech recognition errors
+  const onSpeechError = event => {
+    console.error('Speech Recognition Error: ', event.error);
+    setIsListening(false);
+  };
+
+  // Handle search input and filter results
   const handleSearch = text => {
     setSearchQuery(text);
     if (text) {
@@ -55,7 +141,7 @@ const FullSearchBar = () => {
       );
       setFilteredData(newData);
     } else {
-      setFilteredData([]);
+      setFilteredData(searchData); // Reset to original data if search query is cleared
     }
   };
 
@@ -66,28 +152,29 @@ const FullSearchBar = () => {
   const closeModal = () => {
     setIsModalVisible(false);
     setSearchQuery('');
-    setFilteredData(searchData); // Reset filtered data when modal is closed
+    setFilteredData(searchData); // Reset search when modal is closed
+  };
+
+  // Microphone press handler to toggle between listening states
+  const handleMicPress = () => {
+    isListening ? stopListening() : startListening();
   };
 
   return (
     <View style={styles.container}>
-      <View style={styles.inputContainer}>
+      <TouchableOpacity style={styles.inputContainer} onPress={openModal}>
         <Icon name="search" size={30} color="#000" />
-        <TextInput
-          style={styles.input}
-          placeholder="Search"
-          placeholderTextColor={'#222'}
-          value={searchQuery}
-          onFocus={openModal}
-          onPress={openModal} // Open the modal when the input is focused
-          onChangeText={handleSearch}
-        />
-        <TouchableOpacity style={styles.mike}>
-          <Icon name="mic" size={20} color={Color.white} />
+        <Text style={styles.placeholderText}>{'Search'}</Text>
+        <TouchableOpacity style={styles.mike} onPress={handleMicPress}>
+          <Icon
+            name={isListening ? 'mic-off' : 'mic'}
+            size={20}
+            color={Color.white}
+          />
         </TouchableOpacity>
-      </View>
+      </TouchableOpacity>
 
-      {/* Full-screen modal for search results */}
+      {/* Modal for search results */}
       <Modal
         visible={isModalVisible}
         animationType="slide"
@@ -98,22 +185,24 @@ const FullSearchBar = () => {
             resizeMode="stretch"
             style={{flex: 1}}>
             <Cmnhdr2 backIcon title="Search Result" />
-            {/* Fixed search bar at the top */}
+
+            {/* Search bar inside modal */}
             <View style={[styles.inputContainer, {margin: 10}]}>
               <Icon name="search" size={30} color="#000" />
               <TextInput
                 style={styles.input}
                 placeholder="Search"
-                placeholderTextColor={'#222'}
+                placeholderTextColor="#222"
                 value={searchQuery}
                 onChangeText={handleSearch}
+                autoFocus={true} // Focus on the input when modal opens
               />
               <TouchableOpacity style={styles.mike} onPress={closeModal}>
                 <Icon name="close" size={20} color={Color.white} />
               </TouchableOpacity>
             </View>
 
-            {/* Scrollable list of search results */}
+            {/* Search results list */}
             <View style={{marginVertical: 10}}>
               <FlatList
                 data={filteredData}
@@ -121,26 +210,24 @@ const FullSearchBar = () => {
                 renderItem={({item}) => (
                   <TouchableOpacity
                     style={styles.listItem}
-                    onPress={() =>
+                    onPress={() => {
+                      setIsModalVisible(false);
                       navigation.navigate(ScreenNames.productdetails, {
                         id: item?.id,
-                      })
-                    }>
+                      });
+                    }}>
                     <View style={styles.img}>
                       <Image
                         source={{
                           uri: apis.baseImgUrl + item?.images[0]?.image_url,
                         }}
-                        style={[styles.image]}
+                        style={styles.image}
                         resizeMode="cover"
                       />
                     </View>
                     <View style={styles.txt}>
-                      {/* <Text style={styles.itemSubText}>
-                        {item.brand?.brand_name}
-                      </Text> */}
+                      <Text style={styles.itemText}>{item.product_name}</Text>
                     </View>
-                    <Text style={styles.itemText}>{item.product_name}</Text>
                   </TouchableOpacity>
                 )}
                 showsVerticalScrollIndicator={false}
@@ -166,21 +253,26 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     paddingHorizontal: 10,
     padding: 5,
+    zIndex: 10,
+  },
+  placeholderText: {
+    flex: 1,
+    height: 40,
+    fontSize: 15,
+    color: '#222',
+    paddingLeft: 10,
+    paddingTop: 10,
   },
   input: {
     flex: 1,
-    width: 'auto',
     height: 40,
     fontSize: 15,
-    flexDirection: 'row',
-    alignItems: 'center',
     color: '#222',
   },
   mike: {
     backgroundColor: '#222',
     borderRadius: 50,
     padding: 2,
-    color: '#fff',
     height: 24,
     width: 24,
     alignItems: 'center',
@@ -190,7 +282,6 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 10,
     borderColor: '#ddd',
-    // borderWidth: 10,
     flexDirection: 'row',
   },
   itemText: {
@@ -198,7 +289,6 @@ const styles = StyleSheet.create({
     width: 200,
   },
   img: {
-    // flex: 1,
     marginRight: 10,
   },
   image: {

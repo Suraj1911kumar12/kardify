@@ -18,11 +18,18 @@ import axios from '../../../axios';
 import {UseAuth} from '../../context/AuthContext';
 import Icon from 'react-native-vector-icons/AntDesign';
 import {showMessage} from 'react-native-flash-message';
-import {useSelector} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
+import {setMainAddress} from '../../redux/slice/MainAddressSlice';
+import {useNavigation} from '@react-navigation/native';
+import ScreenNames from '../../constants/Screens';
 const {height, width} = Dimensions.get('screen');
 
 const AddressChange = () => {
   const auth = UseAuth();
+  const dispatch = useDispatch();
+  const selector = useSelector(state => state.MainAddressSlice);
+  const navigation = useNavigation();
+
   const [shipToken, setShiptoken] = useState(null);
 
   useEffect(() => {
@@ -46,32 +53,7 @@ const AddressChange = () => {
   const [isEditMode, setIsEditMode] = useState(false); // Track if in edit mode
   const [editingAddressId, setEditingAddressId] = useState(null);
 
-  const [addresses, setAddresses] = useState([
-    {
-      fullName: 'John Doe',
-      phone: '+91 1234567890',
-      buildingName: 'ABC Building',
-      landmark: 'Near XYZ Road',
-      area: 'ABC Street',
-      city: 'New York',
-      state: 'NY',
-      pincode: '12345',
-      country: 'USA',
-      addressType: 'Home',
-    },
-    {
-      fullName: 'John Doe',
-      phone: '+91 1234567890',
-      buildingName: 'ABC Building',
-      landmark: 'Near XYZ Road',
-      area: 'ABC Street',
-      city: 'New York',
-      state: 'NY',
-      pincode: '12345',
-      country: 'USA',
-      addressType: 'Home',
-    },
-  ]);
+  const [addresses, setAddresses] = useState([]);
   const [newAddress, setNewAddress] = useState({
     fullName: '',
     email: '',
@@ -113,6 +95,7 @@ const AddressChange = () => {
           }));
           setAddresses(fetchedAddresses);
           setSelected(resp.data.addresses[0]?.id);
+          dispatch(setMainAddress(resp.data.addresses[0]));
         }
       } catch (error) {
         console.log(error);
@@ -122,10 +105,7 @@ const AddressChange = () => {
   }, []);
 
   const getShipping = async () => {
-    const add = addresses?.filter(e => e.id === selected)?.[0];
-    console.log('====================================');
-    console.log(add?.pincode, 'add?.pincode');
-    console.log('====================================');
+    const add = addresses?.filter(e => e.id === selector?.addresses?.id)?.[0];
 
     try {
       const resp = await axios.post(
@@ -143,12 +123,9 @@ const AddressChange = () => {
           },
         },
       );
-      console.log('====================================');
-      console.log(resp?.data, 'resp?.data');
-      console.log('====================================');
 
       if (resp.data.code === 200) {
-        console.log('shipping', resp.data.shipping);
+        console.log('shipping', resp.data.data);
       } else {
         console.log(resp.data.message);
       }
@@ -156,7 +133,6 @@ const AddressChange = () => {
       console.log('====================================');
       console.log(error, 'errore');
       console.log('====================================');
-      console.error('Error fetching shipping:', error.response.data.message);
     }
   };
 
@@ -232,13 +208,6 @@ const AddressChange = () => {
   };
   // Handle Add or Edit Address Submission
   const handleSaveAddress = async () => {
-    // setIsLoading(true);
-
-    // Check for empty fields
-    // if (Object.values(newAddress).some(field => field.trim() === '')) {
-    //   return;
-    // }
-
     if (isEditMode && editingAddressId) {
       // Update existing address
       try {
@@ -316,10 +285,6 @@ const AddressChange = () => {
     setOpen(false);
   };
 
-  const handleButtonClick = () => {
-    // Perform the action you want when the button is clicked
-    handleAddAddress();
-  };
   const handleChange = (field, value) => {
     setNewAddress({...newAddress, [field]: value});
   };
@@ -381,13 +346,20 @@ const AddressChange = () => {
     setIsEditMode(true); // Switch to edit mode
     setOpen(true); // Open the modal
   };
+  const handleAddAddressItemToStore = address => {
+    dispatch(setMainAddress(address));
+    navigation.navigate(ScreenNames.checkout);
+  };
 
   const renderAddressItem = ({item, index}) => (
     <TouchableOpacity
-      onPress={() => setSelected(item?.id)}
+      onPress={() => {
+        setSelected(item?.id);
+        handleAddAddressItemToStore(item);
+      }}
       style={[
         styles.addressItem,
-        selected === item?.id && styles.selectedAddress,
+        item?.id === selector?.addresses?.id && styles.selectedAddress,
       ]}>
       <Text
         style={{
@@ -568,6 +540,12 @@ const AddressChange = () => {
             )}
           </View>
         </ScrollView>
+        {!open && (
+          <CustomButton
+            title={'Continue'}
+            onPressButton={() => navigation.navigate(ScreenNames.checkout)}
+          />
+        )}
       </LinearGradient>
     </SafeAreaView>
   );

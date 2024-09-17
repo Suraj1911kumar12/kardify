@@ -22,8 +22,10 @@ import {UseAuth} from '../../context/AuthContext';
 import ContinueWith from '../../component/ContinueWith';
 import SigninTemplate from '../../component/SigninTemplate';
 import {Color} from '../../styles/Color';
+import {useNavigation} from '@react-navigation/native';
 
 const LoginViaProtect = props => {
+  const navigation = useNavigation();
   const auth = UseAuth();
   const [username, setUserName] = useState('');
   const [password, setPassword] = useState('');
@@ -41,14 +43,14 @@ const LoginViaProtect = props => {
     );
 
     return () => backHandler.remove(); // Clean up the event listener
-  }, [props.navigation]);
+  }, []);
 
   const handleLogin = () => {
-    auth.login(username, password);
+    auth.login(username, password, navigation);
   };
   const handleSkip = async () => {
     auth.setIsAuthenticated(true);
-    props.navigation.navigate(ScreenNames.Home);
+    navigation.navigate(ScreenNames.Home);
   };
 
   return (

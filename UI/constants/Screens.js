@@ -108,6 +108,8 @@ const ScreenNames = {
   PaymentSuccessful: 'PaymentSuccessful',
   addressChange: 'addressChange',
   profileChange: 'profileChange',
+  filterProductList: 'FilterProductList',
+  ProductListforFilter: 'ProductListforFilter',
 };
 
 export default ScreenNames;

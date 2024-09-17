@@ -27,7 +27,7 @@ import {addWishList, getWhishList} from '../../redux/slice/wishlist';
 
 const {width} = Dimensions.get('screen');
 
-const Products = props => {
+const ProductListforFilter = props => {
   const auth = UseAuth();
 
   const selector = useSelector(state => state);
@@ -43,7 +43,7 @@ const Products = props => {
 
   const getProduct = useCallback(async () => {
     try {
-      const response = await axios.get(`get-products-customer?${param}`);
+      const response = await axios.get(`${param}`);
 
       if (response.data.code === 200) {
         setProducts(response.data.products);
@@ -303,7 +303,7 @@ const Products = props => {
   );
 };
 
-export default Products;
+export default ProductListforFilter;
 
 const styles = StyleSheet.create({
   card: {

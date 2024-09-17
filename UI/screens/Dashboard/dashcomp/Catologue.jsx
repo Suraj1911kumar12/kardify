@@ -44,15 +44,22 @@ const Catalogue = () => {
         <View style={styles.grid}>
           {displayedCategories.map((ele, i) => (
             <TouchableOpacity
-              // onPress={() =>
-              //   navigation.navigate(
-              //     ScreenNames.productsList,
-              //     `category_id=${ele?.id}`,
-              //   )
-              // }
-              onPress={() =>
-                navigation.navigate(ScreenNames.accessories, ele?.id)
-              }
+              onPress={() => {
+                if (ele?.id === 13 || ele?.id === 5) {
+                  if (ele?.id === 13) {
+                    navigation.navigate(ScreenNames.filterProductList, {
+                      id: ele?.id,
+                      title: 'Alloy wheels selection',
+                    });
+                  } else if (ele?.id === 5) {
+                    navigation.navigate(ScreenNames.filterProductList, {
+                      title: 'Vehicle Selection',
+                    });
+                  }
+                } else {
+                  navigation.navigate(ScreenNames.accessories, ele?.id);
+                }
+              }}
               key={ele?.id}
               style={[styles.boxView, {marginLeft: i % 3 === 0 ? 10 : 0}]}>
               <Text numberOfLines={2} style={styles.valText}>

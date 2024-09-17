@@ -27,6 +27,7 @@ import CouponAdd from '../checkout/CouponAdd';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ScreenNames from '../../constants/Screens';
 import BottomSheetModal from '../../component/BottomSheetModal';
+import PullToRefreshScrollView from '../PullRefresh/PullToRefresh';
 
 const {height, width} = Dimensions.get('screen');
 
@@ -53,8 +54,64 @@ const MainCarts = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedCoupon, setSelectedCoupon] = useState(null);
   const [coupons, setSelectedCouponList] = useState([]);
+
+  const addCartApiData = async (prId, comId, qunt) => {
+    try {
+      const response = await axios.post(
+        '/add-to-cart',
+        {
+          product_id: prId,
+          combination_id: comId || null,
+          quantity: 1,
+        },
+        {
+          headers: {
+            Authorization: auth.token,
+          },
+        },
+      );
+
+      if (response.data.code === 201) {
+        // Extract the product data from the response
+        showMessage({
+          message: response?.data?.message || 'Product added to cart!',
+          type: 'success',
+        });
+      } else if (response.data.code === 401) {
+        showMessage({
+          message:
+            response?.data?.message || 'Please login to add items to the cart!',
+          type: 'warning',
+        });
+        AsyncStorage.removeItem('token');
+        navigation.navigate(ScreenNames.LoginScreen);
+      } else {
+        showMessage({
+          message: response.data.message,
+          type: 'warning',
+        });
+      }
+    } catch (error) {
+      showMessage({
+        message:
+          error?.response.data.message || 'Error adding product to cart!',
+        type: 'danger',
+      });
+    }
+  };
+
   const getDataCart = async () => {
     if (auth.token) {
+      const data = await AsyncStorage.getItem('cart');
+      const cart = data ? JSON.parse(data) : [];
+
+      if (cart.length > 0) {
+        for (let i = 0; i < cart.length; i++) {
+          addCartApiData(cart[i].id, cart[i].combination_id, cart[i].quantity);
+        }
+        AsyncStorage.removeItem('cart');
+      }
+
       try {
         const res = await axios.get(getCartApi, {
           headers: {
@@ -62,7 +119,7 @@ const MainCarts = () => {
           },
         });
         if (res?.data?.code === 200) {
-          setCartItems(res.data?.cartItems);
+          setCartItems([...res.data?.cartItems]);
           setTotalData(res?.data?.cartItems?.length);
           setPriceData({
             totalPrice: res?.data?.totalPrice,
@@ -87,8 +144,6 @@ const MainCarts = () => {
       }
     }
   };
-  const [isChecked, setIsChecked] = useState(false);
-  const [isChecked2, setIsChecked2] = useState(false);
 
   useEffect(() => {
     if (auth.token) {
@@ -326,8 +381,8 @@ const MainCarts = () => {
       </View>
     );
   };
-  const CustomBtn = ({id, combId, quantity}) => (
-    <View style={styles.customBtnContainer}>
+  const CustomBtnMain = ({id, combId, quantity}) => (
+    <View style={styles.CustomBtnMainContainer}>
       <TouchableOpacity
         onPress={() => decreseQuantity(id, combId)}
         style={styles.btn}>
@@ -364,7 +419,8 @@ const MainCarts = () => {
         <View style={styles.itemTitleContainer}>
           <Text style={styles.itemTitle}>{item?.product?.product_name}</Text>
           <Text style={{color: Color.white}}> {item?.product?.rating}</Text>
-          <CustomBtn
+
+          <CustomBtnMain
             id={item?.product_id}
             quantity={item?.quantity}
             combId={item?.combination_id}
@@ -410,24 +466,40 @@ const MainCarts = () => {
               </Text>
             )}
           </View>
+          <View
+            style={{
+              minWidth: 50,
+
+              gap: 10,
+              alignItems: 'flex-end',
+              // borderWidth: 2,
+              borderColor: Color.white,
+              justifyContent: 'center',
+            }}>
+            {item?.product?.stock && (
+              <Text
+                style={{
+                  borderWidth: 1,
+                  borderColor: Color.white,
+                  color: Color.green,
+                  paddingVertical: 10,
+                  paddingHorizontal: 20,
+                  textAlign: 'center',
+                  fontSize: 12,
+                  borderRadius: 30,
+                }}>
+                {/* {item?} */}
+                In Stock
+              </Text>
+            )}
+          </View>
         </View>
       </View>
     );
   };
 
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [isAccepted, setIsAccepted] = useState(false);
 
-  const handleProceed = () => {
-    if (isChecked && isChecked2) {
-      // Proceed with the action
-      console.log('All checkboxes are accepted');
-      setIsModalVisible(false);
-      navigation.navigate(ScreenNames.checkout);
-    } else {
-      alert('You must accept all terms and conditions to proceed.');
-    }
-  };
   const renderWithoutToken = data => {
     const item = data?.item;
     return (
@@ -450,7 +522,7 @@ const MainCarts = () => {
           {item?.rating && (
             <Text style={{color: Color.white}}> {item?.rating}</Text>
           )}
-          <CustomBtn
+          <CustomBtnMain
             id={item?.product_id}
             quantity={item?.quantity}
             combId={item?.combination_id}
@@ -506,6 +578,7 @@ const MainCarts = () => {
         resizeMode="stretch"
         style={{height: '100%', width: '100%'}}>
         <Cmnhdr2 backIcon title="Cart" />
+        <PullToRefreshScrollView fetchData={getDataCart} />
         <ScrollView style={{paddingBottom: 10, marginBottom: 60}}>
           <OrderStatusLine status="Cart" />
           {isLoading ? (
@@ -539,13 +612,28 @@ const MainCarts = () => {
               ) : (
                 <View
                   style={{
+                    flex: 1,
                     alignItems: 'center',
                     justifyContent: 'center',
                     marginBottom: 20,
+                    height: SCREEN_HEIGHT * 0.73,
                   }}>
-                  <Text style={{color: Color.white, fontSize: 20}}>
-                    Your cart is empty
-                  </Text>
+                  <View
+                    style={{
+                      flex: 1,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}>
+                    <Text style={{color: Color.white, fontSize: 20}}>
+                      There is no product in Your Cart
+                    </Text>
+                  </View>
+                  <CustomButton
+                    title="Continue Shopping"
+                    onPressButton={() =>
+                      navigation.navigate(ScreenNames.productsList)
+                    }
+                  />
                 </View>
               )}
             </>
@@ -633,7 +721,7 @@ const styles = StyleSheet.create({
     flex: 2,
     gap: 4,
   },
-  customBtnContainer: {
+  CustomBtnMainContainer: {
     flexDirection: 'row',
     width: 75,
     height: 25,

@@ -38,6 +38,8 @@ import {checkOnboardingStatus} from '../../utils/isOnboarded';
 import PaymentSuccessful from '../../component/PaymentSuccessful';
 import AddressChange from '../../screens/AddressChange/AddressChange';
 import UpdateProfile from '../../screens/profiles/UpdateProfile';
+import FillterProductList from '../../screens/Products/FillterProductList';
+import ProductListforFilter from '../../screens/Products/ProductListforFilter';
 
 const Stack = createNativeStackNavigator();
 
@@ -136,8 +138,16 @@ const Mainstacknavigator = () => {
         />
         <Stack.Screen name={ScreenNames.productsList} component={Products} />
         <Stack.Screen
+          name={ScreenNames.filterProductList}
+          component={FillterProductList}
+        />
+        <Stack.Screen
           name={ScreenNames.productdetails}
           component={ProductDetails}
+        />
+        <Stack.Screen
+          name={ScreenNames.ProductListforFilter}
+          component={ProductListforFilter}
         />
         {/* Always Accessible Screens */}
         <Stack.Screen name={ScreenNames.Home} component={Home} />

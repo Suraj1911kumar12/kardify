@@ -1,9 +1,9 @@
 import {
-  Button,
   Dimensions,
   FlatList,
   Image,
   ImageBackground,
+  Pressable,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -29,16 +29,17 @@ const MyOrders = () => {
   const auth = UseAuth();
   const {token} = auth;
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isModalVisible, setModalVisible] = useState(false);
   const [selected, setSelected] = useState(0);
   const [orders, setOrders] = useState([]);
   const [trackOrder, setTrackOrder] = useState(null); // For tracking selected order
+  const [changeStatus, setChangeStatus] = useState(true);
 
   const getApi = apis.getOrder;
 
   const getOrders = useCallback(async () => {
-    setIsLoading(true);
+    console.log('Suraj');
     try {
       const response = await axios.get(getApi, {
         headers: {
@@ -49,21 +50,63 @@ const MyOrders = () => {
 
       const filteredOrders =
         selected === 0 ? orders : orders.filter(e => e?.id === 5);
-
       setOrders(filteredOrders);
     } catch (error) {
       console.log('Error fetching orders', error);
     } finally {
       setIsLoading(false);
     }
-  }, [auth.token, selected]);
+  }, [auth.token, selected, changeStatus]);
 
   useEffect(() => {
+    console.log('Successfully');
     getOrders();
   }, [getOrders]);
+  const cancelOrder = async (order_id, order_status_id) => {
+    try {
+      const resp = await axios.post(
+        '/order-status-update',
+        {
+          order_id: order_id,
+          order_status_id: 9,
+          cancellation_reason: '',
+        },
+        {
+          headers: {
+            Authorization: auth.token,
+          },
+        },
+      );
+      if (resp.data.code === 200) {
+        showMessage({
+          message: resp.data.message || 'Order Cancled',
+          type: 'success',
+        });
+        console.log('====================================');
+        console.log(resp?.data?.message);
+        console.log('====================================');
+        // getOrders();
+        setChangeStatus(!changeStatus);
+      } else {
+        console.log('====================================');
+        console.log(resp?.data?.message);
+        console.log('====================================');
+        showMessage({
+          message: resp.data.message || 'Order Cancled',
+          type: 'warning',
+        });
+      }
+    } catch (error) {
+      console.log('====================================');
+      console.log(error);
+      console.log('====================================');
+      console.log(error.response.data.message, 'error');
+    }
+  };
 
-  const openTrackOrderModal = order => {
-    setTrackOrder(order); // Set selected order for tracking
+  const openTrackOrderModal = id => {
+    setTrackOrder(orders.filter(e => e.id === id)?.[0]); // Set selected order for tracking
+
     setModalVisible(true);
   };
 
@@ -91,7 +134,7 @@ const MyOrders = () => {
     const statusColor = statusColors[item?.order_status?.id];
 
     return (
-      <TouchableOpacity key={item?.id} onPress={() => setModalVisible(true)}>
+      <Pressable key={item?.id}>
         <View style={styles.orderContainer}>
           <View style={styles.headerContainer}>
             <View style={{flexDirection: 'row', gap: 2}}>
@@ -149,16 +192,28 @@ const MyOrders = () => {
               </View>
             </View>
           </View>
+
           <View style={styles.buttonContainer}>
-            <TouchableOpacity>
-              <Text style={{color: Color.red}}>Cancel The Order</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => openTrackOrderModal(item)}>
+            {item?.order_status?.id !== 9 && (
+              <TouchableOpacity
+                style={{
+                  flex: 1,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                onPress={() => cancelOrder(item?.id, item?.order_status?.id)}>
+                <Text style={{color: Color.red}}>Cancel The Order</Text>
+              </TouchableOpacity>
+            )}
+
+            <TouchableOpacity
+              style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}
+              onPress={() => openTrackOrderModal(item?.id)}>
               <Text style={{color: Color.green}}>Track Order</Text>
             </TouchableOpacity>
           </View>
         </View>
-      </TouchableOpacity>
+      </Pressable>
     );
   };
   const formatDate = dateString => {
@@ -210,7 +265,7 @@ const MyOrders = () => {
             {/* <Text style={styles.sheetTitle}>Tracking Id : (123456789) </Text> */}
 
             {trackOrder && (
-              <View>
+              <ScrollView>
                 <Text style={styles.sheetText}>
                   Order ID: {trackOrder?.order_id}
                 </Text>
@@ -270,7 +325,7 @@ const MyOrders = () => {
                     </View>
                   </View>
                 ))}
-              </View>
+              </ScrollView>
             )}
             <TouchableOpacity
               style={styles.sheetButton}
@@ -291,7 +346,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   orderContainer: {
-    minHeight: 100,
+    minHeight: 120,
     backgroundColor: Color.lightBlack,
     margin: 10,
     elevation: 5,
@@ -345,7 +400,7 @@ const styles = StyleSheet.create({
   bottomSheetContent: {
     backgroundColor: Color.lightBlack,
     padding: 16,
-    height: screenHeight * 0.4,
+    minHeight: screenHeight * 0.4,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     position: 'relative',

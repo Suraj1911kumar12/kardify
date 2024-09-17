@@ -29,9 +29,6 @@ const WishList = () => {
   const dispatch = useDispatch();
   const selector = useSelector(state => state.wishList);
   const auth = UseAuth();
-  // console.log('====================================');
-  // console.log(auth.token);
-  // console.log('====================================');
 
   useEffect(() => {
     if (!auth.token) {

@@ -5,6 +5,7 @@ import addressReducer from './slice/addresSlice';
 import wishListReducer from './slice/wishlist';
 import selectedAddressReducer from './slice/SeletedAddress';
 import selectedPayemnt from './slice/selectedPayment';
+import MainAddressSlice from './slice/MainAddressSlice';
 
 const Store = configureStore({
   reducer: {
@@ -13,7 +14,8 @@ const Store = configureStore({
     address: addressReducer,
     wishList: wishListReducer,
     shipping: selectedAddressReducer,
-    payment: selectedPayemnt, // add other reducers here as per your requirements
+    MainAddressSlice: MainAddressSlice,
+    payment: selectedPayemnt,
   },
 });
 

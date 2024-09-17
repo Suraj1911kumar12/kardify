@@ -4,9 +4,9 @@ import {
   SafeAreaView,
   ImageBackground,
   StyleSheet,
-  StatusBar,
   Image,
   ScrollView,
+  RefreshControl,
 } from 'react-native';
 import React, {useCallback, useEffect, useState} from 'react';
 import {UseAuth} from '../../context/AuthContext';
@@ -25,8 +25,6 @@ import axios from '../../../axios';
 import {useDispatch, useSelector} from 'react-redux';
 import {addProfile} from '../../redux/slice/profileSlice';
 import {addAddress} from '../../redux/slice/addresSlice';
-import {addProduct, getProduct} from '../../redux/slice/cartSlice';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import Banner from '../Banner/Banner';
 
 const MainHome = props => {
@@ -34,6 +32,8 @@ const MainHome = props => {
   const dispatch = useDispatch();
 
   const selector = useSelector(state => state.item);
+  // State for pull-to-refresh
+  const [refreshing, setRefreshing] = useState(false);
 
   // *********************************State's Call **********************************
   const [isLoading, setIsLoading] = useState(false);
@@ -72,11 +72,20 @@ const MainHome = props => {
       }
     } catch (error) {
       console.log(error, 'error');
+    } finally {
+      setIsLoading(false);
     }
   }, [auth, dispatch]);
 
   useEffect(() => {
     getUserDetail();
+  }, [getUserDetail]);
+
+  // Refresh handler
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await getUserDetail();
+    setRefreshing(false);
   }, [getUserDetail]);
 
   const navigation = useNavigation();
@@ -93,7 +102,10 @@ const MainHome = props => {
           // onPress={() => props.navigation.openDrawer()}
           notification={() => navigation.navigate(ScreenNames.notification)}
         />
-        <ScrollView>
+        <ScrollView
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }>
           <FullSearchBar />
           {/* ************************ banner ************************************ */}
 
@@ -228,19 +240,6 @@ const MainHome = props => {
               styles.BrandMainView,
               {backgroundColor: '#16171B', marginBottom: 0},
             ]}>
-            <View style={{width: '100%'}}>
-              <Text
-                style={{
-                  color: 'white',
-                  fontSize: 16,
-                  lineHeight: 24,
-                  fontWeight: '500',
-                  marginVertical: 15,
-                  textAlign: 'center',
-                }}>
-                Testimonials
-              </Text>
-            </View>
             <Testimonials />
           </View>
           {/* <View style={{backgroundColor:'#16171B',height:100}} /> */}

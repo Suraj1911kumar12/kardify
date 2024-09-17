@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
   StyleSheet,
   Text,
@@ -12,48 +12,96 @@ import {
   ScrollView,
   Pressable,
   Dimensions,
+  ActivityIndicator,
+  ImageBackground,
 } from 'react-native';
 import {Color} from '../../styles/Color';
 import LinearGradient from 'react-native-linear-gradient';
-import CustomButton from '../../component/CustomButton';
 import axios from '../../../axios';
 import {UseAuth} from '../../context/AuthContext';
 const {height, width} = Dimensions.get('screen');
 import DateTimePicker from '@react-native-community/datetimepicker';
+import {apis} from '../../utils/api';
+import {showMessage} from 'react-native-flash-message';
+import {useDispatch} from 'react-redux';
+import {addProfile} from '../../redux/slice/profileSlice';
+import CustomButton from '../../component/CustomButton';
 
 const UpdateProfile = props => {
   const auth = UseAuth();
-  const [selected, setSelected] = useState(1);
+  const [selected, setSelected] = useState('Male');
   const [fullname, setFullname] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [dob, setDob] = useState('');
   const [gender, setGender] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const dispatch = useDispatch();
+
+  const getUserDetail = useCallback(async () => {
+    console.log('====================================');
+    console.log('called');
+    console.log('====================================');
+    setIsLoading(true);
+    try {
+      const user = await axios.get('/fetch-customer-details', {
+        headers: {
+          Authorization: auth.token,
+        },
+      });
+      console.log('====================================');
+      console.log(user.data);
+      console.log('====================================');
+      if (user.data.code === 200) {
+        const customerData = user.data.customer_data.customer;
+        dispatch(addProfile(customerData));
+      } else {
+      }
+    } catch (error) {
+      console.log(error, 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [auth, dispatch, showMessage]);
 
   const handleUpdate = async () => {
-    // Handle profile update logic here
-    console.log({fullname, email, phone, dob, gender});
+    setIsLoading(true);
+    const data = new FormData();
+    data.append('fullname', fullname);
+    data.append('email', email);
+    data.append('phone', phone);
+    data.append('dob', dob);
+    data.append('gender', gender);
 
     try {
-      const res = await axios.post(
-        '/edit-customer-details',
-        {
-          fullname,
-          email,
-          phone,
-          dob,
-          gender,
+      const res = await axios.post(apis.edit_profile, data, {
+        headers: {
+          Authorization: auth.token,
+          'Content-Type': 'multipart/form-data',
         },
-        {
-          headers: {
-            Authorization: auth.token,
-          },
-        },
-      );
-      console.log(res?.data?.data);
+      });
+      if (res.data.stauts) {
+        getUserDetail();
+        showMessage({
+          message: res?.data?.message || 'Profile updated successfully',
+          type: 'success',
+        });
+        props.navigation.goBack();
+      } else {
+        showMessage({
+          message: res?.data?.message || 'error message',
+          type: 'success',
+        });
+      }
     } catch (error) {
       console.error('Error updating profile:', error.response.data.message);
+      showMessage({
+        message: 'Error updating profile',
+        type: 'danger',
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -67,22 +115,30 @@ const UpdateProfile = props => {
     setShowDatePicker(true);
   };
 
+  // Function to fetch data for pull-to-refresh
+  const fetchProfileData = useCallback(async () => {
+    try {
+      const data = props.route.params;
+      setEmail(data.email);
+      setPhone(data.phone);
+      setDob(data.dob);
+      setFullname(data.fullname);
+      setGender(data.gender);
+    } catch (error) {
+      console.error('Error fetching profile data:', error);
+    }
+  }, [props.route.params]);
+
   useEffect(() => {
-    const data = props.route.params;
-    setEmail(data.email);
-    setPhone(data.phone);
-    setDob(data.dob);
-    setFullname(data.fullname);
-    setGender(data.gender);
-  }, []);
+    fetchProfileData();
+  }, [fetchProfileData, showMessage]);
 
   return (
     <SafeAreaView style={styles.mainContainer}>
-      <LinearGradient
-        start={{x: 0, y: 0}}
-        end={{x: 1, y: 1}}
-        colors={['#1E2A38', '#2A3B54']}
-        style={styles.linearGradient}>
+      <ImageBackground
+        source={require('../../../assets/images/homeBg.png')}
+        resizeMode="stretch"
+        style={{height: '100%', width: '100%'}}>
         <ScrollView style={styles.container}>
           <Text style={styles.title}>Update Profile</Text>
           <Text
@@ -142,7 +198,7 @@ const UpdateProfile = props => {
             }}>
             Date Of Birth
           </Text>
-          {/* {showDatePicker && (
+          {showDatePicker && (
             <DateTimePicker
               value={new Date(dob) || new Date()}
               mode="date"
@@ -150,15 +206,15 @@ const UpdateProfile = props => {
               onChange={handleDateChange}
               maximumDate={new Date()} // Optional: to prevent selecting future dates
             />
-          )} */}
-          {/* <TouchableOpacity onPress={showDatePickerHandler}> */}
-          <TextInput
-            style={styles.input}
-            placeholder="Date of Birth"
-            value={dob}
-            editable={false} // Prevent manual input
-          />
-          {/* </TouchableOpacity> */}
+          )}
+          <TouchableOpacity onPress={showDatePickerHandler}>
+            <TextInput
+              style={styles.input}
+              placeholder="Date of Birth"
+              value={dob}
+              editable={false} // Prevent manual input
+            />
+          </TouchableOpacity>
           <Text
             style={{
               color: Color.white,
@@ -173,11 +229,14 @@ const UpdateProfile = props => {
               <TouchableOpacity
                 key={type}
                 style={styles.radioButton}
-                onPress={() => setSelected(index + 1)}>
+                onPress={() => {
+                  setSelected(type);
+                  setGender(type);
+                }}>
                 <View
                   style={[
                     styles.radioCircle,
-                    selected === index + 1 && styles.selectedRadioCircle,
+                    selected === type && styles.selectedRadioCircle,
                   ]}
                 />
                 <Text style={styles.radioText}>{type}</Text>
@@ -188,10 +247,12 @@ const UpdateProfile = props => {
 
         <TouchableOpacity style={styles.button} onPress={() => handleUpdate()}>
           <View>
-            <Text style={[styles.text]}>{'Update'}</Text>
+            <Text style={[styles.text]}>
+              {isLoading ? <ActivityIndicator /> : 'Update'}
+            </Text>
           </View>
         </TouchableOpacity>
-      </LinearGradient>
+      </ImageBackground>
     </SafeAreaView>
   );
 };
