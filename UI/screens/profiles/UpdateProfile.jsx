@@ -4,30 +4,26 @@ import {
   Text,
   View,
   TextInput,
-  Button,
-  Modal,
   TouchableOpacity,
-  FlatList,
   SafeAreaView,
   ScrollView,
-  Pressable,
   Dimensions,
   ActivityIndicator,
   ImageBackground,
 } from 'react-native';
 import {Color} from '../../styles/Color';
-import LinearGradient from 'react-native-linear-gradient';
 import axios from '../../../axios';
 import {UseAuth} from '../../context/AuthContext';
 const {height, width} = Dimensions.get('screen');
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {apis} from '../../utils/api';
 import {showMessage} from 'react-native-flash-message';
-import {useDispatch} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import {addProfile} from '../../redux/slice/profileSlice';
-import CustomButton from '../../component/CustomButton';
+import {useNavigation} from '@react-navigation/native';
 
 const UpdateProfile = props => {
+  const navigation = useNavigation();
   const auth = UseAuth();
   const [selected, setSelected] = useState('Male');
   const [fullname, setFullname] = useState('');
@@ -38,11 +34,9 @@ const UpdateProfile = props => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const dispatch = useDispatch();
+  const seletor = useSelector(state => state);
 
-  const getUserDetail = useCallback(async () => {
-    console.log('====================================');
-    console.log('called');
-    console.log('====================================');
+  const getUserDetail = async () => {
     setIsLoading(true);
     try {
       const user = await axios.get('/fetch-customer-details', {
@@ -55,6 +49,9 @@ const UpdateProfile = props => {
       console.log('====================================');
       if (user.data.code === 200) {
         const customerData = user.data.customer_data.customer;
+        console.log('====================================');
+        console.log(customerData);
+        console.log('====================================');
         dispatch(addProfile(customerData));
       } else {
       }
@@ -63,7 +60,7 @@ const UpdateProfile = props => {
     } finally {
       setIsLoading(false);
     }
-  }, [auth, dispatch, showMessage]);
+  };
 
   const handleUpdate = async () => {
     setIsLoading(true);
@@ -82,13 +79,15 @@ const UpdateProfile = props => {
         },
       });
       if (res.data.stauts) {
-        getUserDetail();
         showMessage({
           message: res?.data?.message || 'Profile updated successfully',
           type: 'success',
         });
-        props.navigation.goBack();
+        getUserDetail();
+        navigation.goBack();
       } else {
+        getUserDetail();
+
         showMessage({
           message: res?.data?.message || 'error message',
           type: 'success',

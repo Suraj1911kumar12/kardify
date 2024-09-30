@@ -52,39 +52,32 @@ export const AuthProvider = ({children}) => {
         username: username,
         password: password,
       });
-      console.log(response.status, 'res');
+      console.log(response.data, 'res');
 
-      if (response.status === 200) {
-        if (response.data.code === 200) {
-          setIsLoading(false);
-          AsyncStorage.setItem('token', `${response?.data?.token}`);
-          showMessage({
-            message: response?.data?.message || 'Login Successfull ',
-            type: 'success',
-          });
-          checkToken();
-          if (navigation) {
-            navigation.goBack();
-          } else {
-            navigation.navigate(ScreenNames.Home);
-          }
-        } else if (response.data.code === 400) {
-          setIsLoading(false);
-          showMessage({
-            message: response?.data?.message || 'Invalid Credentials',
-            type: 'danger',
-          });
+      // if (response.status === 200) {
+      if (response.data.code === 200) {
+        setIsLoading(false);
+        AsyncStorage.setItem('token', `${response?.data?.token}`);
+        showMessage({
+          message: response?.data?.message || 'Login Successfull ',
+          type: 'success',
+        });
+        checkToken();
+        if (navigation) {
+          navigation.goBack();
         } else {
-          setIsLoading(false);
-          showMessage({
-            message: response?.data?.message || 'Server Error',
-            type: 'danger',
-          });
+          navigation.navigate(ScreenNames.Home);
         }
+      } else if (response.data.code === 400) {
+        setIsLoading(false);
+        showMessage({
+          message: response?.data?.message || 'Invalid Credentials',
+          type: 'danger',
+        });
       } else {
         setIsLoading(false);
         showMessage({
-          message: response?.data?.message || 'Login Failed ',
+          message: response?.data?.message || 'Server Error',
           type: 'danger',
         });
       }

@@ -79,7 +79,7 @@ const FilterProductList = props => {
 
       setYear(newYear); // Store years in the state
     }
-  }, []);
+  }, [sYear, eYear]);
 
   useEffect(() => {
     getBrandList();
